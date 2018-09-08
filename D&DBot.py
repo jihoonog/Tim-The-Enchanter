@@ -2,9 +2,77 @@ import discord, json, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 
-def cleanText(text):
-    p = re.compile(r'<.*?>')
-    return p.sub('', text)
+class Spellbook:
+    spells = list()
+    def __init__(self, owner):
+        self.name = name
+
+    def listSpells(self):
+        return spells
+
+    def spellNames(self):
+        text = ""
+        for spell in spells:
+            text = text + spell["name"] + ", "
+        return text
+
+    def addSpell(self):
+        pass
+
+def spellFinder(spells, spellName):
+    savedSpell = None
+    text = ""
+    for spell in spells:
+        if spell["name"].lower().replace("'", "").replace(" ", "") == spellName.lower().replace("'", "").replace(" ", ""):
+            return True, spell
+        elif spellName.lower().replace("'", "").replace(" ", "") in spell["name"].lower().replace("'", "").replace(" ", ""):
+            if not savedSpell:
+                savedSpell = spell
+            else:
+                text = text + spell["name"] + "? "
+    if not savedSpell:
+        return False, ""
+    elif text == "":
+        return True, savedSpell
+    else:
+        text = savedSpell["name"] + "? " + text
+        return False, text
+
+def parseDice(rolls, multiplier):
+    try:
+        sum = 0
+        results = list()
+        rolls = rolls.replace(" ", "").replace("-", "+-").split("+")
+        for roll in rolls:
+            if "d" in roll:
+                if roll[0] == "-":
+                    roll = roll[1:]
+                    count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
+                    subresults = list()
+                    for i in range(count):
+                        num = random.randrange(die) + 1
+                        subresults.append(num)
+                        sum -= num
+                    results.append(subresults)
+                else:
+                    count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
+                    subresults = list()
+                    for i in range(count):
+                        num = random.randrange(die) + 1
+                        subresults.append(num)
+                        sum += 2 * num
+                    results.append(subresults)
+            elif roll == "":
+                pass
+            else:
+                sum += int(roll)
+                results.append(roll)
+        finalresults = list()
+        for result in results:
+            finalresults.append(str(result))
+        return "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
+    except:
+        return "Invalid dice roll command"
 
 def componentParsing(components):
     text = ""
@@ -68,38 +136,21 @@ def runServer():
         print("Got Command:", message.content)
         toSend = ""
 
-        if message.content.startswith("roll"):
-            try:
-                command = message.content[4:]
-                count, die = int(command[:command.index("d")]), int(command[(command.index("d")+1):])
-                rolls = list()
-                sum = 0
-                for i in range(count):
-                    roll = random.randrange(die) + 1
-                    rolls.append(roll)
-                    sum += roll
-                toSend = "Result: " + str(sum) + "\n" + str(rolls)
-            except:
-                await client.send_message(channel, "Unknown Roll Command")
-                return
+        if message.content[:4].lower() == "roll":
+            toSend = parseDice(message.content[4:], 1)
+
+        elif message.content[:5].lower() == "croll":
+            toSend = parseDice(message.content[5:], 2)
 
         elif message.content.lower() in ["random", "r"]:
             toSend = spellText(randomSpell(spells))
 
         else:
-            savedSpell = ""
-            for spell in spells:
-                if spell["name"].lower().replace("'", "").replace(" ", "") == message.content.lower().replace("'", "").replace(" ", ""):
-                    toSend = spellText(spell)
-                    break
-                elif message.content.lower().replace("'", "").replace(" ", "") in spell["name"].lower().replace("'", "").replace(" ", ""):
-                    if toSend == "":
-                        toSend = spellText(spell)
-                        savedSpell = spell["name"]
-                    elif toSend[-2:] == "? ":
-                        toSend = toSend + spell["name"] + "? "
-                    else:
-                        toSend = savedSpell + "? " + spell["name"] + "? "
+            found, result = spellFinder(spells, message.content)
+            if found:
+                toSend = spellText(result)
+            else:
+                toSend = result
 
         print("Responding With:", toSend)
         if toSend == "":
