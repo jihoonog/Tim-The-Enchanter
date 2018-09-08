@@ -46,6 +46,25 @@ def runServer():
         elif message.content.startswith('#'):
             return
 
+        elif message.content.startswith("roll"):
+            try:
+                command = message.content[4:]
+                count, die = int(command[:command.index("d")]), int(command[command.index("d")+1:])
+                rolls = list()
+                sum = 0
+                for i in range(count):
+                    roll = random.randrange(die) + 1
+                    rolls.append(roll)
+                    sum += roll
+                toSend = "Result: " + sum + "\n" + rolls
+
+            except:
+                await client.send_message(channel, "Unknown Roll Command")
+                return
+
+        elif message.content in ["random", "r", "Random"]:
+            toSend = str(randomSpell(PHBSpells))
+
         else:
             for spell in spells:
                 if spell["name"] == message.content:
