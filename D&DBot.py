@@ -19,7 +19,7 @@ def randomSpell(spells):
     return random.choice(spells)
 
 def runServer():
-    spells = json.load(open("/Users/josephmeleshko/Code/D&D/spells.json"))
+    spells = json.load(open("spells.json"))
     print("Loaded all availible spells")
 
     PHBSpells = [spell for spell in spells if spell["source"] == "PHB"]
@@ -36,7 +36,7 @@ def runServer():
     @client.event
     async def on_message(message):
         channel = message.channel
-        
+
         print("Got Command:", message.content)
         toSend = ""
 
