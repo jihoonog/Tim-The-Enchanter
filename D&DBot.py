@@ -4,7 +4,7 @@ schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantme
 
 class Spellbook:
     spells = list()
-    def __init__(self, owner):
+    def __init__(self, name):
         self.name = name
 
     def listSpells(self):
@@ -16,8 +16,8 @@ class Spellbook:
             text = text + spell["name"] + ", "
         return text
 
-    def addSpell(self):
-        pass
+    def addSpell(self, spell):
+        self.spells.append(spell)
 
 def spellFinder(spells, spellName):
     savedSpell = None
@@ -107,19 +107,20 @@ def randomSpell(spells):
     return random.choice(spells)
 
 def runServer():
-    spells = json.load(open("spells.json"))
-    print("Loaded all availible spells")
+    spells = [spell for spell in json.load(open("spells.json")) if spell["source"] == "PHB" or spell["source"] == "XGE"]
+    print("Loaded", len(spells), "spells")
 
-    spells = [spell for spell in spells if spell["source"] == "PHB" or spell["source"] == "XGE"]
-    print("Filtered to Player's Hand Book and Xanathar's Guide To Everything")
+    spellbooks = dict()
+    print("Loaded", len(spellbooks.keys()), "spellbooks")
 
-    token = "NDg3ODAzODkwNDExMjQxNDgy.DnUGPQ.g7DNgBqhJqhnJ5XVY2Ci_eWrEB8"
+    token = open("token.txt").readline().strip()
+    print("Loaded token", token)
+
     client = discord.Client()
-    print("Client delared")
+    print("Loaded client")
 
     @client.event
     async def on_message(message):
-        channel = message.channel
 
         if message.author == client.user:
             return
@@ -139,6 +140,12 @@ def runServer():
         elif message.content.lower() in ["random", "r"]:
             toSend = spellText(randomSpell(spells))
 
+        elif message.content[:2].lower() == "sb":
+            pass
+
+        elif message.content.lower().replace(" ", "") == "whoareyou?":
+            toSend = "There are some who call me... ***Tim***"
+
         else:
             found, result = spellFinder(spells, message.content)
             if found:
@@ -148,10 +155,10 @@ def runServer():
 
         print("Responding With:", toSend)
         if toSend == "":
-            await client.send_message(channel, "Can't find spell or command")
+            await message.channel.send("Can't find spell or command")
             return
         elif len(toSend) < 2000:
-            await client.send_message(channel, toSend)
+            await message.channel.send(toSend)
         else:
             msgs = list()
             while (len(toSend) >= 2000):
@@ -159,19 +166,19 @@ def runServer():
                 msgs.append(front)
             msgs.append(toSend)
             for msg in msgs:
-                await client.send_message(channel, msg)
+                await message.channel.send(msg)
 
     @client.event
     async def on_ready():
-        print('Logged in as')
-        print(client.user.name)
-        print(client.user.id)
-        print('------')
-
-    print("events loaded")
+        print("Logged in as", client.user.name, client.user.id, end="\n")
+        for guild in client.guilds:
+            for channel in guild.channels:
+                try:
+                    await channel.send("There are some who call me... ***Tim***")
+                except:
+                    pass
 
     client.run(token)
-    print("Done")
 
 if __name__ == "__main__":
     runServer()
