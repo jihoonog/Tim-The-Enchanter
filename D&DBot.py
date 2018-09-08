@@ -85,9 +85,17 @@ def spellbookParser(spells, spellbooks, command):
             except:
                 return "Spellbook doesn't exist"
         elif command[0] == "save":
-            return "NYI"
+            file = open("spellbooks/" + command[1] + ".json", "w")
+            file.write(json.dump(spellbooks[command[1]]))
+            file.flush()
+            file.close()
+            return "Sucessfully saved " + command[0]
         elif command[0] == "load":
-            return "NYI"
+            file = open("spellbooks/" + command[1] + ".json", "r")
+            spellbooks[command[1]] = json.loads(file.read())
+            file.flush()
+            file.close()
+            return "sucessfully loaded " + command[0]
         elif command[1] == "add":
             found, result = spellFinder(spells, command[2])
             if found:
@@ -108,7 +116,7 @@ def spellbookParser(spells, spellbooks, command):
         else:
             return "Invalid spellbook command"
     except:
-        return "Invalid spellbook commandb"
+        return "Spellbook command exception"
 
 def componentParsing(components):
     text = ""
