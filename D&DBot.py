@@ -51,10 +51,6 @@ def runServer():
     spells = [spell for spell in spells if spell["source"] == "PHB" or spell["source"] == "XGE"]
     print("Filtered to Player's Hand Book and Xanathar's Guide To Everything")
 
-    for spell in spells:
-        print(spell["name"])
-        print(spellText(spell))
-
     token = "NDg3ODAzODkwNDExMjQxNDgy.DnTAOg.bBEPj7Lg7UBv9LV0_ARbQht3akI"
     client = discord.Client()
     print("Client delared")
