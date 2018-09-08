@@ -87,12 +87,19 @@ def runServer():
             toSend = spellText(randomSpell(spells))
 
         else:
+            savedSpell = ""
             for spell in spells:
                 if spell["name"].lower().replace("'", "").replace(" ", "") == message.content.lower().replace("'", "").replace(" ", ""):
                     toSend = spellText(spell)
                     break
                 elif message.content.lower().replace("'", "").replace(" ", "") in spell["name"].lower().replace("'", "").replace(" ", ""):
-                    toSend = toSend + spell["name"] + "? "
+                    if toSend == "":
+                        toSend = spellText(spell)
+                        savedSpell = spell["name"]
+                    elif toSend.contains("?"):
+                        toSend = toSend + spell["name"] + "? "
+                    else:
+                        toSend = savedSpell + "? " + spell["name"] + "? "
 
         print("Responding With:", toSend)
         if toSend == "":
