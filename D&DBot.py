@@ -90,6 +90,9 @@ def runServer():
             for spell in spells:
                 if spell["name"].lower().replace("'", "").replace(" ", "") == message.content.lower().replace("'", "").replace(" ", ""):
                     toSend = spellText(spell)
+                    break
+                elif message.content.lower().replace("'", "").replace(" ", "") in spell["name"].lower().replace("'", "").replace(" ", ""):
+                    toSend = toSend + spell["name"] + "? "
 
         print("Responding With:", toSend)
         toSend = cleanText(toSend)
