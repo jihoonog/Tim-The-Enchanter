@@ -96,7 +96,7 @@ def runServer():
                     if toSend == "":
                         toSend = spellText(spell)
                         savedSpell = spell["name"]
-                    elif toSend.contains("?"):
+                    elif toSend[-2:] == "? ":
                         toSend = toSend + spell["name"] + "? "
                     else:
                         toSend = savedSpell + "? " + spell["name"] + "? "
