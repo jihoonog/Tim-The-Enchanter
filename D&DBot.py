@@ -83,7 +83,7 @@ def runServer():
                 await client.send_message(channel, "Unknown Roll Command")
                 return
 
-        elif message.content in ["random", "r", "Random"]:
+        elif message.content.lower() in ["random", "r"]:
             toSend = spellText(randomSpell(spells))
 
         else:
