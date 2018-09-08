@@ -12,7 +12,7 @@ def componentParsing(components):
         if isinstance(components[key], str):
             text = text + "M (" + components[key] + ")"
         else:
-            text = text + key.upper() + " "
+            text = key.upper() + " " + text
     return text
 
 def entriesParsing(entries):
