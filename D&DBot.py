@@ -95,9 +95,8 @@ def runServer():
                     toSend = toSend + spell["name"] + "? "
 
         print("Responding With:", toSend)
-        toSend = cleanText(toSend)
         if toSend == "":
-            await client.send_message(channel, "Unknown Command")
+            await client.send_message(channel, "Can't find spell or command")
             return
         elif len(toSend) < 2000:
             await client.send_message(channel, toSend)
