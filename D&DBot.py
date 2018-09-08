@@ -3,21 +3,21 @@ import discord, json, random, re
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 
 class Spellbook:
-    spells = list()
     def __init__(self, name):
         self.name = name
+        self.spells = list()
 
     def listSpells(self):
         return spells
 
-    def spellNames(self):
-        text = ""
-        for spell in spells:
-            text = text + spell["name"] + ", "
-        return text
-
     def addSpell(self, spell):
         self.spells.append(spell)
+
+    def removeSpell(self, spell):
+        try:
+            self.spells.remove(spell)
+        except:
+            pass
 
 def spellFinder(spells, spellName):
     savedSpell = None
@@ -67,6 +67,48 @@ def parseDice(rolls, multiplier):
         return ("" if multiplier == 1 else "**Crit** ") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
     except:
         return "Invalid dice roll command"
+
+def spellbookParser(spells, spellbooks, command):
+    try:
+        if command[0] == "list":
+            return ", ".join(spellbooks.keys())
+        elif command[0] == "new":
+            try:
+                spellbooks[command[1]] = Spellbook(command[1])
+                return "Created spellbook " + command[1]
+            except:
+                return "Spellbook already exists"
+        elif command[0] == "delete":
+            try:
+                del spellbooks[command[1]]
+                return "Deleted spellbook " + command[1]
+            except:
+                return "Spellbook doesn't exist"
+        elif command[0] == "save":
+            return "NYI"
+        elif command[0] == "load":
+            return "NYI"
+        elif command[1] == "add":
+            found, result = spellFinder(spells, command[2])
+            if found:
+                spellbooks[command[0]].addSpell(result)
+                return "Added " + result["name"] + " to " + command[0]
+            else:
+                return result
+        elif command[1] == "remove":
+            found, result = spellFinder(spells, command[2])
+            if found:
+                spellbooks[command[0]].addSpell(result)
+                return "Removed " + result["name"] + " from " + command[0]
+            else:
+                return result
+        elif command[1] == "list":
+            spellList = spellbooks[command[0]].spells
+            return ", ".join([spell["name"] for spell in spellList])
+        else:
+            return "Invalid spellbook command"
+    except:
+        return "Invalid spellbook commandb"
 
 def componentParsing(components):
     text = ""
@@ -141,7 +183,7 @@ def runServer():
             toSend = spellText(randomSpell(spells))
 
         elif message.content[:2].lower() == "sb":
-            pass
+            toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
 
         elif message.content.lower().replace(" ", "") == "whoareyou?":
             toSend = "There are some who call me... ***Tim***"
