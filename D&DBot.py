@@ -60,7 +60,7 @@ def parseDice(rolls, multiplier):
                     for i in range(count):
                         num = random.randrange(die) + 1
                         subresults.append(num)
-                        sum += 2 * num
+                        sum += multiplier * num
                     results.append(subresults)
             elif roll == "":
                 pass
@@ -70,7 +70,7 @@ def parseDice(rolls, multiplier):
         finalresults = list()
         for result in results:
             finalresults.append(str(result))
-        return "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
+        return ("" if multiplier == 1 else "**Crit** ") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
     except:
         return "Invalid dice roll command"
 
