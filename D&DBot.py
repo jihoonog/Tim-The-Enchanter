@@ -45,23 +45,17 @@ def parseDice(rolls, multiplier):
         rolls = rolls.replace(" ", "").replace("-", "+-").split("+")
         for roll in rolls:
             if "d" in roll:
+                sign = 1
                 if roll[0] == "-":
                     roll = roll[1:]
-                    count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
-                    subresults = list()
-                    for i in range(count):
-                        num = random.randrange(die) + 1
-                        subresults.append(num)
-                        sum -= num
-                    results.append(subresults)
-                else:
-                    count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
-                    subresults = list()
-                    for i in range(count):
-                        num = random.randrange(die) + 1
-                        subresults.append(num)
-                        sum += multiplier * num
-                    results.append(subresults)
+                    sign = -1
+                count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
+                subresults = list()
+                for i in range((multiplier if sign == 1 else 1) * count):
+                    num = random.randrange(die) + 1
+                    subresults.append(num)
+                    sum += sign * num
+                results.append(subresults)
             elif roll == "":
                 pass
             else:
