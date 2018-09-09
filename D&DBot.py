@@ -194,14 +194,16 @@ def entriesParsing(entries):
 
 def spellText(spell):
     return "**Name:** " + spell["name"] + "\n" + \
-        "**Type:** Level " + str(spell["level"]) + " " + schools[spell["school"]] + "\n" + \
+        "**Type:** Level " + str(spell["level"]) + " " + schools[spell["school"]] + \
+        (" (Ritual)" if "meta" in spell.keys() else "") + "\n" + \
         "**Casting Time:** " + str(spell["time"][0]["number"]) + " " + spell["time"][0]["unit"] + "\n" + \
         "**Range:** " + \
         ("" if spell["range"]["distance"]["type"] in ["touch", "self", "special", "sight", "unlimited"] else str(spell["range"]["distance"]["amount"])) + \
         " " + spell["range"]["distance"]["type"] + "\n" + \
         "**Components:** " + componentParsing(spell["components"]) + "\n" + \
         "**Duration:** " + (spell["duration"][0]["type"] if spell["duration"][0]["type"] in ["instant", "permanent", "special"] \
-        else str(spell["duration"][0]["duration"]["amount"]) + " " + spell["duration"][0]["duration"]["type"]) + "\n" + \
+        else str(spell["duration"][0]["duration"]["amount"]) + " " + spell["duration"][0]["duration"]["type"]) + \
+        (" (Concentration)" if "concentration" in spell["duration"][0].keys() else "") + "\n" + \
         "**Description:** " + entriesParsing(spell["entries"]) + \
         (entriesParsing(spell["entriesHigherLevel"]) if "entriesHigherLevel" in spell.keys() else "") + \
         "**Classes:** " + ", ".join([c for c in (["Wizard" if {"name": "Wizard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
@@ -224,7 +226,7 @@ def randomSpell(spells):
 def spellSearch(spells, filterList):
     try:
         if len(filterList) == 0:
-            return "Valid Search Filters:\nlevel, school, class, source, v, s, m"
+            return "Valid Search Filters:\nlevel, school, class, subclass, concentration, ritual, source, v, s, m"
         returnList = list()
         for spell in spells:
             valid = True
@@ -287,6 +289,24 @@ def spellSearch(spells, filterList):
                         else:
                             valid = False
                             break
+                    elif left == "concentration":
+                        if right in ["t", "true"]:
+                            if "concentration" not in spell["duration"][0].keys():
+                                valid = False
+                                break
+                        elif right in ["f", "false"]:
+                            if "concentration" in spell["duration"][0].keys():
+                                valid = False
+                                break
+                    elif left == "ritual":
+                        if right in ["t", "true"]:
+                            if "meta" not in spell.keys():
+                                valid = False
+                                break
+                        elif right in ["f", "false"]:
+                            if "meta" in spell.keys():
+                                valid = False
+                                break
             if valid:
                 returnList.append(spell["name"])
         if len(returnList) == 0:
