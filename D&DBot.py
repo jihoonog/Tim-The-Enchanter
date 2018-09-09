@@ -204,22 +204,104 @@ def spellText(spell):
         else str(spell["duration"][0]["duration"]["amount"]) + " " + spell["duration"][0]["duration"]["type"]) + "\n" + \
         "**Description:** " + entriesParsing(spell["entries"]) + \
         (entriesParsing(spell["entriesHigherLevel"]) if "entriesHigherLevel" in spell.keys() else "") + \
+        "**Classes:** " + ", ".join([c for c in (["Wizard" if {"name": "Wizard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Sorcerer" if {"name": "Sorcerer", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Warlock" if {"name": "Warlock", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Paladin" if {"name": "Paladin", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Druid" if {"name": "Druid", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Bard" if {"name": "Bard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Ranger" if {"name": "Ranger", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Cleric" if {"name": "Cleric", "source": "PHB"} in spell["classes"]["fromClassList"] else ""] + \
+        [subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
+        if "subSubclass" in subclass["subclass"].keys() else "") for subclass in spell["classes"]["fromSubclass"] \
+        if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
+        if "fromSubclass" in spell["classes"].keys() else "") if c]) + "\n" + \
         "**Book:** " + spell["source"]
 
 def randomSpell(spells):
     return random.choice(spells)
 
 def spellSearch(spells, filterList):
-    if len(filterList) == 0:
-        return "HELP TEXT HERE"
-    returnList = list()
-    for spell in spells:
-        for filter in filterList:
-            pass
-    return ", ".join(returnList)
+    try:
+        if len(filterList) == 0:
+            return "Valid Search Filters:\nlevel, school, class, source, v, s, m"
+        returnList = list()
+        for spell in spells:
+            valid = True
+            for f in filterList:
+                if "=" in f:
+                    left, right = f[:f.index("=")].lower(), f[f.index("=")+1:].lower()
+                    if left == "level":
+                        if str(spell["level"]) != right:
+                            valid = False
+                            break
+                    elif left == "school":
+                        if right not in [schools[spell["school"]].lower(), spell["school"].lower()]:
+                            valid = False
+                            break
+                    elif left == "source":
+                        if right not in spell["source"].lower():
+                            valid = False
+                            break
+                    elif left == "v":
+                        if right in ["t", "true"]:
+                            if "v" not in spell["components"].keys():
+                                valid = False
+                                break
+                        elif right in ["f", "false"]:
+                            if "v" in spell["components"].keys():
+                                valid = False
+                                break
+                    elif left == "s":
+                        if right in ["t", "true"]:
+                            if "s" not in spell["components"].keys():
+                                valid = False
+                                break
+                        elif right in ["f", "false"]:
+                            if "s" in spell["components"].keys():
+                                valid = False
+                                break
+                    elif left == "m":
+                        if right in ["t", "true"]:
+                            if "m" not in spell["components"].keys():
+                                valid = False
+                                break
+                        elif right in ["f", "false"]:
+                            if "m" in spell["components"].keys():
+                                valid = False
+                                break
+                    elif left == "class":
+                        if right not in [c["name"].lower().replace(" ", "") for c in spell["classes"]["fromClassList"]]:
+                            valid = False
+                            break
+                    elif left == "subclass":
+                        if "fromSubclass" in spell["classes"].keys():
+                            if right in [c["subclass"]["name"].lower().replace(" ", "") for c in spell["classes"]["fromSubclass"]]:
+                                continue
+                            elif right in [c["subclass"]["subSubclass"].lower() \
+                            for c in spell["classes"]["fromSubclass"] if "subSubclass" in c["subclass"].keys()]:
+                                continue
+                            else:
+                                valid = False
+                                break
+                        else:
+                            valid = False
+                            break
+            if valid:
+                returnList.append(spell["name"])
+        if len(returnList) == 0:
+            return "No valid spells found"
+        elif len(returnList) == 1:
+            found, result = spellFinder(spells, returnList[0])
+            return spellText(result)
+        else:
+            return ", ".join(returnList)
+    except Exception as e:
+        print(e)
+        return "Filter command exception"
 
 def runServer():
-    spells = [spell for spell in json.load(open("spells.json")) if spell["source"] == "PHB" or spell["source"] == "XGE"]
+    spells = [spell for spell in json.load(open("spells.json")) if spell["source"] in ["PHB", "XGE"]]
     print("Loaded", len(spells), "spells")
 
     spellbooks = dict()
@@ -270,8 +352,10 @@ def runServer():
                 quit()
             else:
                 toSend = "I'm not tired"
+
         elif message.content[:6].lower() == "search":
             toSend = spellSearch(spells, message.content[6:].lower().split())
+
         else:
             found, result = spellFinder(spells, message.content)
             if found:

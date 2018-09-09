@@ -2129,18 +2129,6 @@
 						"name": "Ranger",
 						"source": "PHB"
 					}
-				],
-				"fromSubclass": [
-					{
-						"class": {
-							"name": "Barbarian",
-							"source": "PHB"
-						},
-						"subclass": {
-							"name": "Path of the Totem Warrior",
-							"source": "PHB"
-						}
-					}
 				]
 			},
 			"source": "PHB",
@@ -4281,16 +4269,6 @@
 				}
 			],
 			"fromSubclass": [
-				{
-					"class": {
-						"name": "Barbarian",
-						"source": "PHB"
-					},
-					"subclass": {
-						"name": "Path of the Totem Warrior",
-						"source": "PHB"
-					}
-				},
 				{
 					"class": {
 						"name": "Druid",
@@ -22269,16 +22247,6 @@
 				}
 			],
 			"fromSubclass": [
-				{
-					"class": {
-						"name": "Barbarian",
-						"source": "PHB"
-					},
-					"subclass": {
-						"name": "Path of the Totem Warrior",
-						"source": "PHB"
-					}
-				},
 				{
 					"class": {
 						"name": "Cleric",
