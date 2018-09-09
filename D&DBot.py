@@ -1,4 +1,4 @@
-import discord, json, random, re
+import discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 
@@ -71,13 +71,17 @@ def parseDice(rolls, multiplier):
 def spellbookParser(spells, spellbooks, command):
     try:
         if command[0] == "list":
-            return ", ".join(spellbooks.keys())
+            text = ", ".join(spellbooks.keys())
+            return text if text else "No spellbooks found"
         elif command[0] == "new":
-            try:
-                spellbooks[command[1]] = Spellbook(command[1])
-                return "Created spellbook " + command[1]
-            except:
-                return "Spellbook already exists"
+            if command[1].isalpha():
+                if command[1] not in spellbooks.keys():
+                    spellbooks[command[1]] = Spellbook(command[1])
+                    return "Created spellbook " + command[1]
+                else:
+                    return "Spellbook already exists"
+            else:
+                return "Please use letters exclusively for the spellbook name"
         elif command[0] == "delete":
             try:
                 del spellbooks[command[1]]
@@ -85,28 +89,31 @@ def spellbookParser(spells, spellbooks, command):
             except:
                 return "Spellbook doesn't exist"
         elif command[0] == "save":
-            file = open("spellbooks/" + command[1] + ".json", "w")
-            file.write(json.dump(spellbooks[command[1]]))
-            file.flush()
-            file.close()
-            return "Sucessfully saved " + command[0]
+            pickle.dump(spellbooks[command[1]], open("spellbooks/" + command[1] + '.pickle', 'wb'))
+            return "Sucessfully saved " + command[1]
+        elif command[0] in ["fullsave", "saveall"]:
+            for spellbook in spellbooks.keys():
+                pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
+            return "Saved all spellbooks"
         elif command[0] == "load":
-            file = open("spellbooks/" + command[1] + ".json", "r")
-            spellbooks[command[1]] = json.loads(file.read())
-            file.flush()
-            file.close()
-            return "sucessfully loaded " + command[0]
+            spellbooks[command[1]] = pickle.load(open("spellbooks/" + command[1] + '.pickle', 'rb'))
+            return "Sucessfully loaded " + command[1]
+        elif command[0] in ["fullload", "loadall"]:
+            for file in [file for file in os.listdir("spellbooks/") if os.path.isfile("spellbooks/" + file) and file[-7:] == ".pickle"]:
+                spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
+            return "Loaded all spellbooks"
+
         elif command[1] == "add":
-            found, result = spellFinder(spells, command[2])
+            found, result = spellFinder(spells, "".join(command[2:]))
             if found:
                 spellbooks[command[0]].addSpell(result)
                 return "Added " + result["name"] + " to " + command[0]
             else:
                 return result
         elif command[1] == "remove":
-            found, result = spellFinder(spells, command[2])
+            found, result = spellFinder(spells, "".join(command[2:]))
             if found:
-                spellbooks[command[0]].addSpell(result)
+                spellbooks[command[0]].removeSpell(result)
                 return "Removed " + result["name"] + " from " + command[0]
             else:
                 return result
@@ -115,7 +122,8 @@ def spellbookParser(spells, spellbooks, command):
             return ", ".join([spell["name"] for spell in spellList])
         else:
             return "Invalid spellbook command"
-    except:
+    except Exception as e:
+        print(e)
         return "Spellbook command exception"
 
 def componentParsing(components):
@@ -161,6 +169,8 @@ def runServer():
     print("Loaded", len(spells), "spells")
 
     spellbooks = dict()
+    for file in [file for file in os.listdir("spellbooks/") if os.path.isfile("spellbooks/" + file) and file[-7:] == ".pickle"]:
+        spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
     print("Loaded", len(spellbooks.keys()), "spellbooks")
 
     token = open("token.txt").readline().strip()
@@ -196,6 +206,13 @@ def runServer():
         elif message.content.lower().replace(" ", "") == "whoareyou?":
             toSend = "There are some who call me... ***Tim***"
 
+        elif message.content.lower().replace(" ", "") == "gotosleeptim":
+            if "admin" in [name for name in map(str, message.author.roles)]:
+                await message.channel.send("Ok, Good Night")
+                client.close()
+                quit()
+            else:
+                toSend = "I'm not tired"
         else:
             found, result = spellFinder(spells, message.content)
             if found:
