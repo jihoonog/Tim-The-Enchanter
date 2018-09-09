@@ -223,6 +223,67 @@ def spellText(spell):
 def randomSpell(spells):
     return random.choice(spells)
 
+def spellSearchAssistant(spell, left, right):
+    if left == "level":
+        if str(spell["level"]) != right:
+            return False
+    elif left == "school":
+        if right not in [schools[spell["school"]].lower(), spell["school"].lower()]:
+            return False
+    elif left == "source":
+        if right not in spell["source"].lower():
+            return False
+    elif left == "v":
+        if right in ["t", "true"]:
+            if "v" not in spell["components"].keys():
+                return False
+        elif right in ["f", "false"]:
+            if "v" in spell["components"].keys():
+                return False
+    elif left == "s":
+        if right in ["t", "true"]:
+            if "s" not in spell["components"].keys():
+                return False
+        elif right in ["f", "false"]:
+            if "s" in spell["components"].keys():
+                return False
+    elif left == "m":
+        if right in ["t", "true"]:
+            if "m" not in spell["components"].keys():
+                return False
+        elif right in ["f", "false"]:
+            if "m" in spell["components"].keys():
+                return False
+    elif left == "class":
+        if right not in [c["name"].lower().replace(" ", "") for c in spell["classes"]["fromClassList"]]:
+            return False
+    elif left == "subclass":
+        if "fromSubclass" in spell["classes"].keys():
+            if right in [c["subclass"]["name"].lower().replace(" ", "") for c in spell["classes"]["fromSubclass"]]:
+                return True
+            elif right in [c["subclass"]["subSubclass"].lower() \
+            for c in spell["classes"]["fromSubclass"] if "subSubclass" in c["subclass"].keys()]:
+                return True
+            else:
+                return False
+        else:
+            return False
+    elif left == "concentration":
+        if right in ["t", "true"]:
+            if "concentration" not in spell["duration"][0].keys():
+                return False
+        elif right in ["f", "false"]:
+            if "concentration" in spell["duration"][0].keys():
+                return False
+    elif left == "ritual":
+        if right in ["t", "true"]:
+            if "meta" not in spell.keys():
+                return False
+        elif right in ["f", "false"]:
+            if "meta" in spell.keys():
+                return False
+    return True
+
 def spellSearch(spells, filterList):
     try:
         if len(filterList) == 0:
@@ -233,80 +294,19 @@ def spellSearch(spells, filterList):
             for f in filterList:
                 if "=" in f:
                     left, right = f[:f.index("=")].lower(), f[f.index("=")+1:].lower()
-                    if left == "level":
-                        if str(spell["level"]) != right:
-                            valid = False
-                            break
-                    elif left == "school":
-                        if right not in [schools[spell["school"]].lower(), spell["school"].lower()]:
-                            valid = False
-                            break
-                    elif left == "source":
-                        if right not in spell["source"].lower():
-                            valid = False
-                            break
-                    elif left == "v":
-                        if right in ["t", "true"]:
-                            if "v" not in spell["components"].keys():
-                                valid = False
+                    if "|" in right:
+                        valid = False
+                        right = right.split("|")
+                        for value in right:
+                            if spellSearchAssistant(spell, left, value):
+                                valid = True
                                 break
-                        elif right in ["f", "false"]:
-                            if "v" in spell["components"].keys():
-                                valid = False
-                                break
-                    elif left == "s":
-                        if right in ["t", "true"]:
-                            if "s" not in spell["components"].keys():
-                                valid = False
-                                break
-                        elif right in ["f", "false"]:
-                            if "s" in spell["components"].keys():
-                                valid = False
-                                break
-                    elif left == "m":
-                        if right in ["t", "true"]:
-                            if "m" not in spell["components"].keys():
-                                valid = False
-                                break
-                        elif right in ["f", "false"]:
-                            if "m" in spell["components"].keys():
-                                valid = False
-                                break
-                    elif left == "class":
-                        if right not in [c["name"].lower().replace(" ", "") for c in spell["classes"]["fromClassList"]]:
-                            valid = False
-                            break
-                    elif left == "subclass":
-                        if "fromSubclass" in spell["classes"].keys():
-                            if right in [c["subclass"]["name"].lower().replace(" ", "") for c in spell["classes"]["fromSubclass"]]:
-                                continue
-                            elif right in [c["subclass"]["subSubclass"].lower() \
-                            for c in spell["classes"]["fromSubclass"] if "subSubclass" in c["subclass"].keys()]:
-                                continue
-                            else:
-                                valid = False
-                                break
+                    else:
+                        if spellSearchAssistant(spell, left, right):
+                            continue
                         else:
                             valid = False
                             break
-                    elif left == "concentration":
-                        if right in ["t", "true"]:
-                            if "concentration" not in spell["duration"][0].keys():
-                                valid = False
-                                break
-                        elif right in ["f", "false"]:
-                            if "concentration" in spell["duration"][0].keys():
-                                valid = False
-                                break
-                    elif left == "ritual":
-                        if right in ["t", "true"]:
-                            if "meta" not in spell.keys():
-                                valid = False
-                                break
-                        elif right in ["f", "false"]:
-                            if "meta" in spell.keys():
-                                valid = False
-                                break
             if valid:
                 returnList.append(spell["name"])
         if len(returnList) == 0:
