@@ -32,7 +32,7 @@ def spellFinder(spells, spellName):
             else:
                 text = text + spell["name"] + "? "
     if not savedSpell:
-        return False, ""
+        return False, "Spell not found"
     elif text == "":
         return True, savedSpell
     else:
@@ -51,7 +51,7 @@ def spellbookFinder(spellbooks, spellbookName):
             else:
                 text = text + spellbook + "? "
     if not savedSpellbook:
-        return False, ""
+        return False, "Spellbook not found"
     elif text == "":
         return True, savedSpellbook
     else:
@@ -116,11 +116,12 @@ def spellbookParser(spells, spellbooks, command):
             except:
                 return "Spellbook doesn't exist"
         elif command[0] == "save":
-            if command[1] in spellbooks.keys():
-                pickle.dump(spellbooks[command[1]], open("spellbooks/" + command[1] + '.pickle', 'wb'))
-                return "Sucessfully saved " + command[1]
+            sbfound, sbresult = spellbookFinder(spellbooks, command[1])
+            if sbfound:
+                pickle.dump(spellbooks[sbresult], open("spellbooks/" + sbresult + '.pickle', 'wb'))
+                return "Sucessfully saved " + sbresult
             else:
-                return "Spellbook doesn't exist"
+                return sbresult
         elif command[0] in ["fullsave", "saveall"]:
             for spellbook in spellbooks.keys():
                 pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
@@ -208,6 +209,15 @@ def spellText(spell):
 def randomSpell(spells):
     return random.choice(spells)
 
+def spellSearch(spells, filterList):
+    if len(filterList) == 0:
+        return "HELP TEXT HERE"
+    returnList = list()
+    for spell in spells:
+        for filter in filterList:
+            pass
+    return ", ".join(returnList)
+
 def runServer():
     spells = [spell for spell in json.load(open("spells.json")) if spell["source"] == "PHB" or spell["source"] == "XGE"]
     print("Loaded", len(spells), "spells")
@@ -260,6 +270,8 @@ def runServer():
                 quit()
             else:
                 toSend = "I'm not tired"
+        elif message.content[:6].lower() == "search":
+            toSend = spellSearch(spells, message.content[6:].lower().split())
         else:
             found, result = spellFinder(spells, message.content)
             if found:
