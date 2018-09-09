@@ -344,6 +344,12 @@ def runServer():
         elif message.content.startswith('#'):
             return
 
+        elif len(message.embeds) > 0:
+            return
+
+        elif len(message.attachments) > 0:
+            return
+
         print("Got Command:", message.content)
         toSend = ""
 
