@@ -12,6 +12,7 @@ class Spellbook:
 
     def addSpell(self, spell):
         self.spells.append(spell)
+        self.spells.sort(key=lambda k: k['name'])
 
     def removeSpell(self, spell):
         try:
@@ -36,6 +37,25 @@ def spellFinder(spells, spellName):
         return True, savedSpell
     else:
         text = savedSpell["name"] + "? " + text
+        return False, text
+
+def spellbookFinder(spellbooks, spellbookName):
+    savedSpellbook = None
+    text = ""
+    for spellbook in spellbooks.keys():
+        if spellbook.lower().replace("'", "").replace(" ", "") == spellbookName.lower().replace("'", "").replace(" ", ""):
+            return True, spellbook
+        elif spellbookName.lower().replace("'", "").replace(" ", "") in spellbook.lower().replace("'", "").replace(" ", ""):
+            if not savedSpellbook:
+                savedSpellbook = spellbook
+            else:
+                text = text + spellbook + "? "
+    if not savedSpellbook:
+        return False, ""
+    elif text == "":
+        return True, savedSpellbook
+    else:
+        text = savedSpellbook + "? " + text
         return False, text
 
 def parseDice(rolls, multiplier):
@@ -71,6 +91,13 @@ def parseDice(rolls, multiplier):
 def spellbookParser(spells, spellbooks, command):
     try:
         if command[0] == "list":
+            if len(command) > 1:
+                sbfound, sbresult = spellbookFinder(spellbooks, command[1])
+                if sbfound:
+                    spellList = spellbooks[sbresult].spells
+                    return ", ".join([spell["name"] for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
+                else:
+                    return sbresult
             text = ", ".join(spellbooks.keys())
             return text if text else "No spellbooks found"
         elif command[0] == "new":
@@ -89,37 +116,54 @@ def spellbookParser(spells, spellbooks, command):
             except:
                 return "Spellbook doesn't exist"
         elif command[0] == "save":
-            pickle.dump(spellbooks[command[1]], open("spellbooks/" + command[1] + '.pickle', 'wb'))
-            return "Sucessfully saved " + command[1]
+            if command[1] in spellbooks.keys():
+                pickle.dump(spellbooks[command[1]], open("spellbooks/" + command[1] + '.pickle', 'wb'))
+                return "Sucessfully saved " + command[1]
+            else:
+                return "Spellbook doesn't exist"
         elif command[0] in ["fullsave", "saveall"]:
             for spellbook in spellbooks.keys():
                 pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
             return "Saved all spellbooks"
         elif command[0] == "load":
-            spellbooks[command[1]] = pickle.load(open("spellbooks/" + command[1] + '.pickle', 'rb'))
-            return "Sucessfully loaded " + command[1]
+            try:
+                spellbooks[command[1]] = pickle.load(open("spellbooks/" + command[1] + '.pickle', 'rb'))
+                return "Sucessfully loaded " + command[1]
+            except:
+                return "Spellbook not found"
         elif command[0] in ["fullload", "loadall"]:
             for file in [file for file in os.listdir("spellbooks/") if os.path.isfile("spellbooks/" + file) and file[-7:] == ".pickle"]:
                 spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
             return "Loaded all spellbooks"
-
         elif command[1] == "add":
-            found, result = spellFinder(spells, "".join(command[2:]))
-            if found:
-                spellbooks[command[0]].addSpell(result)
-                return "Added " + result["name"] + " to " + command[0]
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                found, result = spellFinder(spells, "".join(command[2:]))
+                if found:
+                    spellbooks[sbresult].addSpell(result)
+                    return "Added " + result["name"] + " to " + sbresult
+                else:
+                    return result
             else:
-                return result
+                return sbresult
         elif command[1] == "remove":
-            found, result = spellFinder(spells, "".join(command[2:]))
-            if found:
-                spellbooks[command[0]].removeSpell(result)
-                return "Removed " + result["name"] + " from " + command[0]
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                found, result = spellFinder(spellbooks[sbresult].spells, "".join(command[2:]))
+                if found:
+                    spellbooks[sbresult].removeSpell(result)
+                    return "Removed " + result["name"] + " from " + sbresult
+                else:
+                    return result
             else:
-                return result
+                return sbresult
         elif command[1] == "list":
-            spellList = spellbooks[command[0]].spells
-            return ", ".join([spell["name"] for spell in spellList])
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                spellList = spellbooks[sbresult].spells
+                return ", ".join([spell["name"] for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
+            else:
+                return sbresult
         else:
             return "Invalid spellbook command"
     except Exception as e:
@@ -209,6 +253,9 @@ def runServer():
         elif message.content.lower().replace(" ", "") == "gotosleeptim":
             if "admin" in [name for name in map(str, message.author.roles)]:
                 await message.channel.send("Ok, Good Night")
+                for spellbook in spellbooks.keys():
+                    pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
+                client.logout()
                 client.close()
                 quit()
             else:
@@ -222,7 +269,7 @@ def runServer():
 
         print("Responding With:", toSend)
         if toSend == "":
-            await message.channel.send("Can't find spell or command")
+            await message.channel.send("Can't find spell, spellbook or command")
             return
         elif len(toSend) < 2000:
             await message.channel.send(toSend)
