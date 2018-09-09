@@ -212,10 +212,10 @@ def spellText(spell):
         "Bard" if {"name": "Bard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
         "Ranger" if {"name": "Ranger", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
         "Cleric" if {"name": "Cleric", "source": "PHB"} in spell["classes"]["fromClassList"] else ""] + \
-        [subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
+        ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
         if "subSubclass" in subclass["subclass"].keys() else "") for subclass in spell["classes"]["fromSubclass"] \
         if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
-        if "fromSubclass" in spell["classes"].keys() else "") if c]) + "\n" + \
+        if "fromSubclass" in spell["classes"].keys() else [])) if c]) + "\n" + \
         "**Book:** " + spell["source"]
 
 def randomSpell(spells):
