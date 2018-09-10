@@ -21,7 +21,8 @@ Tim can search through the spells based on filters. (see "search level=0|1 class
 You'll need your own discord bot token if you want to use Tim.
 
 I highly recommend you use this image:
-![alt text](TimTheEnchanter.jpg "Tim The Enchanter")
+
+![alt text](timtheenchanter.jpg "Tim The Enchanter")
 
 full sb command list:
 sb list
