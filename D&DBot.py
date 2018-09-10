@@ -165,6 +165,55 @@ def spellbookParser(spells, spellbooks, command):
                 return ", ".join([spell["name"] for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
             else:
                 return sbresult
+        elif command[1] == "search":
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                if len(command) > 2:
+                    spellList = spellbooks[sbresult].spells
+                    returnList = spellSearch(spellList, command[2:])
+                    if len(returnList) == 0:
+                        return "No valid spells found"
+                    elif len(returnList) == 1:
+                        found, result = spellFinder(spells, returnList[0])
+                        return spellText(result)
+                    else:
+                        return ", ".join(returnList)
+                else:
+                    return "No filter supplied"
+            else:
+                return sbresult
+        elif command[1] == "bulkadd":
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                if len(command) > 2:
+                    returnList = spellSearch(spells, command[2:])
+                    count = 0
+                    for spell in returnList:
+                        found, result = spellFinder(spells, spell)
+                        if found:
+                            spellbooks[sbresult].addSpell(result)
+                            count = count + 1
+                    return "Added " + str(count) + " spell(s) to " + sbresult
+                else:
+                    return "No filter supplied"
+            else:
+                return sbresult
+        elif command[1] == "bulkremove":
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                if len(command) > 2:
+                    returnList = spellSearch(spellbooks[sbresult].spells, command[2:])
+                    count = 0
+                    for spell in returnList:
+                        found, result = spellFinder(spellbooks[sbresult].spells, spell)
+                        if found:
+                            spellbooks[sbresult].removeSpell(result)
+                            count = count + 1
+                    return "Removed " + str(count) + " spell(s) from " + sbresult
+                else:
+                    return "No filter supplied"
+            else:
+                return sbresult
         else:
             return "Invalid spellbook command"
     except Exception as e:
@@ -206,14 +255,14 @@ def spellText(spell):
         (" (Concentration)" if "concentration" in spell["duration"][0].keys() else "") + "\n" + \
         "**Description:** " + entriesParsing(spell["entries"]) + \
         (entriesParsing(spell["entriesHigherLevel"]) if "entriesHigherLevel" in spell.keys() else "") + \
-        "**Classes:** " + ", ".join([c for c in (["Wizard" if {"name": "Wizard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "**Classes:** " + ", ".join([c for c in (["Bard" if {"name": "Bard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Cleric" if {"name": "Cleric", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Druid" if {"name": "Druid", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Paladin" if {"name": "Paladin", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
+        "Ranger" if {"name": "Ranger", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
         "Sorcerer" if {"name": "Sorcerer", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
         "Warlock" if {"name": "Warlock", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Paladin" if {"name": "Paladin", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Druid" if {"name": "Druid", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Bard" if {"name": "Bard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Ranger" if {"name": "Ranger", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Cleric" if {"name": "Cleric", "source": "PHB"} in spell["classes"]["fromClassList"] else ""] + \
+        "Wizard" if {"name": "Wizard", "source": "PHB"} in spell["classes"]["fromClassList"] else ""] +
         ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
         if "subSubclass" in subclass["subclass"].keys() else "") for subclass in spell["classes"]["fromSubclass"] \
         if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
@@ -286,8 +335,6 @@ def spellSearchAssistant(spell, left, right):
 
 def spellSearch(spells, filterList):
     try:
-        if len(filterList) == 0:
-            return "Valid Search Filters:\nlevel, school, class, subclass, concentration, ritual, source, v, s, m"
         returnList = list()
         for spell in spells:
             valid = True
@@ -309,16 +356,10 @@ def spellSearch(spells, filterList):
                             break
             if valid:
                 returnList.append(spell["name"])
-        if len(returnList) == 0:
-            return "No valid spells found"
-        elif len(returnList) == 1:
-            found, result = spellFinder(spells, returnList[0])
-            return spellText(result)
-        else:
-            return ", ".join(returnList)
+        return sorted(returnList)
     except Exception as e:
         print(e)
-        return "Filter command exception"
+        return ["Filter command exception"]
 
 def runServer():
     spells = [spell for spell in json.load(open("spells.json")) if spell["source"] in ["PHB", "XGE"]]
@@ -380,8 +421,18 @@ def runServer():
                 toSend = "I'm not tired"
 
         elif message.content[:6].lower() == "search":
-            toSend = spellSearch(spells, message.content[6:].lower().split())
-
+            if message.content[:11].lower() == "search help":
+                toSend = "**Valid Search Filters:**\nlevel, school, class, subclass, concentration, ritual, source, v, s, m\n**Usage**: \
+                \nfilter=value or filter=value1|value2"
+            else:
+                returnList = spellSearch(spells, message.content[6:].lower().split())
+                if len(returnList) == 0:
+                    toSend = "No valid spells found"
+                elif len(returnList) == 1:
+                    found, result = spellFinder(spells, returnList[0])
+                    toSend = spellText(result)
+                else:
+                    toSend = ", ".join(returnList)
         else:
             found, result = spellFinder(spells, message.content)
             if found:
