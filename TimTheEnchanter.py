@@ -85,8 +85,9 @@ def parseDice(rolls, multiplier):
         for result in results:
             finalresults.append(str(result))
         return ("" if multiplier == 1 else "**Crit** ") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
-    except:
-        return "Invalid dice roll command"
+    except Exception as e:
+        print(e)
+        return "Dice roll command exception"
 
 def spellbookParser(spells, spellbooks, command):
     try:
@@ -222,12 +223,13 @@ def spellbookParser(spells, spellbooks, command):
 
 def componentParsing(components):
     text = ""
+    materialtext = ""
     for key in components.keys():
         if isinstance(components[key], str):
-            text = text + "M (" + components[key] + ")"
+            materialtext = "M (" + components[key] + ")"
         else:
-            text = key.upper() + " " + text
-    return text
+            text = text + key.upper() + " "
+    return text + materialtext
 
 def entriesParsing(entries):
     text = ""
@@ -244,7 +246,7 @@ def entriesParsing(entries):
 def spellText(spell):
     return "**Name:** " + spell["name"] + "\n" + \
         "**Type:** Level " + str(spell["level"]) + " " + schools[spell["school"]] + \
-        (" (Ritual)" if "meta" in spell.keys() else "") + "\n" + \
+        (" (Ritual)" if "meta" in spell.keys() and "ritual" in spell["meta"].keys() else "") + "\n" + \
         "**Casting Time:** " + str(spell["time"][0]["number"]) + " " + spell["time"][0]["unit"] + "\n" + \
         "**Range:** " + \
         ("" if spell["range"]["distance"]["type"] in ["touch", "self", "special", "sight", "unlimited"] else str(spell["range"]["distance"]["amount"])) + \
@@ -255,14 +257,7 @@ def spellText(spell):
         (" (Concentration)" if "concentration" in spell["duration"][0].keys() else "") + "\n" + \
         "**Description:** " + entriesParsing(spell["entries"]) + \
         (entriesParsing(spell["entriesHigherLevel"]) if "entriesHigherLevel" in spell.keys() else "") + \
-        "**Classes:** " + ", ".join([c for c in (["Bard" if {"name": "Bard", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Cleric" if {"name": "Cleric", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Druid" if {"name": "Druid", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Paladin" if {"name": "Paladin", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Ranger" if {"name": "Ranger", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Sorcerer" if {"name": "Sorcerer", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Warlock" if {"name": "Warlock", "source": "PHB"} in spell["classes"]["fromClassList"] else "", \
-        "Wizard" if {"name": "Wizard", "source": "PHB"} in spell["classes"]["fromClassList"] else ""] +
+        "**Classes:** " + ", ".join([c for c in ([cclass["name"] for cclass in spell["classes"]["fromClassList"] if cclass["source"] in ["PHB", "XGE"]] + \
         ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
         if "subSubclass" in subclass["subclass"].keys() else "") for subclass in spell["classes"]["fromSubclass"] \
         if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
@@ -282,26 +277,12 @@ def spellSearchAssistant(spell, left, right):
     elif left == "source":
         if right not in spell["source"].lower():
             return False
-    elif left == "v":
+    elif left in ["v", "s", "m"]:
         if right in ["t", "true"]:
-            if "v" not in spell["components"].keys():
+            if left not in spell["components"].keys():
                 return False
         elif right in ["f", "false"]:
-            if "v" in spell["components"].keys():
-                return False
-    elif left == "s":
-        if right in ["t", "true"]:
-            if "s" not in spell["components"].keys():
-                return False
-        elif right in ["f", "false"]:
-            if "s" in spell["components"].keys():
-                return False
-    elif left == "m":
-        if right in ["t", "true"]:
-            if "m" not in spell["components"].keys():
-                return False
-        elif right in ["f", "false"]:
-            if "m" in spell["components"].keys():
+            if left in spell["components"].keys():
                 return False
     elif left == "class":
         if right not in [c["name"].lower().replace(" ", "") for c in spell["classes"]["fromClassList"]]:
@@ -326,10 +307,10 @@ def spellSearchAssistant(spell, left, right):
                 return False
     elif left == "ritual":
         if right in ["t", "true"]:
-            if "meta" not in spell.keys():
+            if "meta" not in spell.keys() or "ritual" not in spell["meta"].keys():
                 return False
         elif right in ["f", "false"]:
-            if "meta" in spell.keys():
+            if "meta" in spell.keys() and "ritual" in spell["meta"].keys():
                 return False
     return True
 
@@ -348,6 +329,8 @@ def spellSearch(spells, filterList):
                             if spellSearchAssistant(spell, left, value):
                                 valid = True
                                 break
+                        if not valid:
+                            break
                     else:
                         if spellSearchAssistant(spell, left, right):
                             continue
