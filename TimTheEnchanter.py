@@ -10,6 +10,7 @@ class Item:
         for k, v in item.items():
             self.attrlist.append(k)
             setattr(self, k, v)
+        print(self.id)
         self.entries = entriesParsing(item["entries"]) if "entries" in item.keys() else ""
 
     def itemText(self):
