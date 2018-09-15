@@ -498,7 +498,7 @@ def runServer():
                 toSend = "**Valid Search Filters:**\nname, level, school, class, subclass, concentration, ritual, source, v, s, m\n**Usage**: \
                 \nfilter=value or filter=value1|value2"
             elif message.content[:13].lower() == "search random":
-                filterList = message.content[:13].lower().split()
+                filterList = message.content[:13].split()
                 count = int(filterList.pop(0))
                 returnList = spellSearch(spells, filterList)
                 if len(returnList) == 0:
