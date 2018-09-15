@@ -5,11 +5,14 @@ schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantme
 class Item:
     def __init__(self, item):
         self.fullString = str(item)
-        self.name = item["name"]
         self.id = item["name"].lower().replace(" ", "").replace("'", "")
+        self.attrlist = []
+        for k, v in item.items():
+            self.arrrlist.append(k)
+            setattr(self, k, v)
 
     def itemText(self):
-        return self.fullString
+        return "\n".join([str(k) + " : " + str(getattr(self, k)) for k in self.attrlist])
 
 class Backpack:
     def __init__(self, name):
