@@ -2,17 +2,53 @@ import discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 
+class Spell:
+
+    def __init__(self, spell):
+        self.name = spell["name"]
+        self.id = spell["name"].lower().replace(" ", "").replace("'", "")
+        self.level = str(spell["level"])
+        self.school = spell["school"]
+        self.time = str(spell["time"][0]["number"]) + " " + spell["time"][0]["unit"]
+        self.range = spell["range"]["type"]
+        self.rangetype = spell["range"]["distance"]["type"]
+        self.rangecount = "" if self.rangetype in ["touch", "self", "special", "sight", "unlimited"] else str(spell["range"]["distance"]["amount"])
+        self.v = "V " if "v" in spell["components"].keys() else ""
+        self.s = "S " if "s" in spell["components"].keys() else ""
+        self.m = "M (" + spell["components"]["m"] + ")" if "m" in spell["components"].keys() else ""
+        self.durationtype = spell["duration"][0]["type"]
+        self.duration = self.durationtype if self.durationtype in ["instant", "permanent", "special"] else str(spell["duration"][0]["duration"]["amount"]) + " " + spell["duration"][0]["duration"]["type"]
+        self.concentration = " (Concentration)" if "concentration" in spell["duration"][0].keys() else ""
+        self.classes = spell["classes"]["fromClassList"]
+        self.subclasses = spell["classes"]["fromSubClass"] if "fromSubClass" in spell["classes"].keys() else None
+        self.source = spell["source"]
+        self.entries = entriesParsing(spell["entries"])
+        self.entriesHL = entriesParsing(spell["entriesHigherLevel"]) if "entriesHigherLevel" in spell.keys() else ""
+        self.ritual = " (Ritual)" if "meta" in spell.keys() and "ritual" in spell["meta"].keys() else ""
+
+    def spellText(self):
+        return "**Name:** " + self.name + "\n" + \
+        "**Type:** Level " + self.level + " " + schools[self.school] + self.ritual + "\n" + \
+        "**Casting Time:** " + self.time + "\n" + \
+        "**Range:** " + self.rangecount + self.rangetype + "\n" + \
+        "**Components:** " + self.v + self.s + self.m + "\n" + \
+        "**Duration:** " + self.duration + self.concentration + "\n" + \
+        "**Description:** " + self.entries + self.entriesLS + \
+        "**Classes:** " + ", ".join([c for c in ([cclass["name"] for cclass in self.classes if cclass["source"] in ["PHB", "XGE"]] + \
+        ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
+        if "subSubclass" in subclass["subclass"].keys() else "") for subclass in self.subclasses \
+        if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
+        if "fromSubclass" in spell["classes"].keys() else [])) if c]) + "\n" + \
+        "**Book:** " + self.source
+
 class Spellbook:
     def __init__(self, name):
         self.name = name
         self.spells = list()
 
-    def listSpells(self):
-        return spells
-
     def addSpell(self, spell):
         self.spells.append(spell)
-        self.spells.sort(key=lambda k: k['name'])
+        self.spells.sort(key=lambda k: k.name)
 
     def removeSpell(self, spell):
         try:
@@ -24,19 +60,19 @@ def spellFinder(spells, spellName):
     savedSpell = None
     text = []
     for spell in spells:
-        if spell["name"].lower().replace("'", "").replace(" ", "") == spellName.lower().replace("'", "").replace(" ", ""):
+        if spell.id == spellName.lower().replace("'", "").replace(" ", ""):
             return True, spell
-        elif spellName.lower().replace("'", "").replace(" ", "") in spell["name"].lower().replace("'", "").replace(" ", ""):
+        elif spellName.lower().replace("'", "").replace(" ", "") in spell.id:
             if not savedSpell:
                 savedSpell = spell
             else:
-                text.append(spell["name"])
+                text.append(spell.name)
     if not savedSpell:
         return False, "Spell not found"
     elif text == []:
         return True, savedSpell
     else:
-        text.append(savedSpell["name"])
+        text.append(savedSpell.name)
         return False, "? ".join(sorted(text)) + "?"
 
 def spellbookFinder(spellbooks, spellbookName):
@@ -96,7 +132,7 @@ def spellbookParser(spells, spellbooks, command):
                 sbfound, sbresult = spellbookFinder(spellbooks, command[1])
                 if sbfound:
                     spellList = spellbooks[sbresult].spells
-                    return ", ".join([spell["name"] for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
+                    return ", ".join([spell.name for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
                 else:
                     return sbresult
             text = ", ".join(spellbooks.keys())
@@ -143,7 +179,7 @@ def spellbookParser(spells, spellbooks, command):
                 found, result = spellFinder(spells, "".join(command[2:]))
                 if found:
                     spellbooks[sbresult].addSpell(result)
-                    return "Added " + result["name"] + " to " + sbresult
+                    return "Added " + result.name + " to " + sbresult
                 else:
                     return result
             else:
@@ -154,7 +190,7 @@ def spellbookParser(spells, spellbooks, command):
                 found, result = spellFinder(spellbooks[sbresult].spells, "".join(command[2:]))
                 if found:
                     spellbooks[sbresult].removeSpell(result)
-                    return "Removed " + result["name"] + " from " + sbresult
+                    return "Removed " + result.name + " from " + sbresult
                 else:
                     return result
             else:
@@ -167,7 +203,7 @@ def spellbookParser(spells, spellbooks, command):
                     found, result = spellFinder(spells, spell.lower().replace(" ", "").replace("'", ""))
                     if found:
                         spellbooks[sbresult].addSpell(result)
-                        reply += "Added " + result["name"] + " to " + sbresult + "\n"
+                        reply += "Added " + result.name + " to " + sbresult + "\n"
                     else:
                         reply += result + "\n"
                 return reply
@@ -181,7 +217,7 @@ def spellbookParser(spells, spellbooks, command):
                     found, result = spellFinder(spells, spell.lower().replace(" ", "").replace("'", ""))
                     if found:
                         spellbooks[sbresult].removeSpell(result)
-                        reply += "Removed " + result["name"] + " from " + sbresult + "\n"
+                        reply += "Removed " + result.name + " from " + sbresult + "\n"
                     else:
                         reply += result + "\n"
                 return reply
@@ -191,7 +227,7 @@ def spellbookParser(spells, spellbooks, command):
             sbfound, sbresult = spellbookFinder(spellbooks, command[0])
             if sbfound:
                 spellList = spellbooks[sbresult].spells
-                return ", ".join([spell["name"] for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
+                return ", ".join([spell.name for spell in spellList]) if len(spellList) > 0 else "Spellbook is empty"
             else:
                 return sbresult
         elif command[1] == "search":
@@ -271,77 +307,59 @@ def entriesParsing(entries):
                 text = text + "****Special, See Guide****\n"
     return text
 
-def spellText(spell):
-    return "**Name:** " + spell["name"] + "\n" + \
-        "**Type:** Level " + str(spell["level"]) + " " + schools[spell["school"]] + \
-        (" (Ritual)" if "meta" in spell.keys() and "ritual" in spell["meta"].keys() else "") + "\n" + \
-        "**Casting Time:** " + str(spell["time"][0]["number"]) + " " + spell["time"][0]["unit"] + "\n" + \
-        "**Range:** " + \
-        ("" if spell["range"]["distance"]["type"] in ["touch", "self", "special", "sight", "unlimited"] else str(spell["range"]["distance"]["amount"])) + \
-        " " + spell["range"]["distance"]["type"] + "\n" + \
-        "**Components:** " + componentParsing(spell["components"]) + "\n" + \
-        "**Duration:** " + (spell["duration"][0]["type"] if spell["duration"][0]["type"] in ["instant", "permanent", "special"] \
-        else str(spell["duration"][0]["duration"]["amount"]) + " " + spell["duration"][0]["duration"]["type"]) + \
-        (" (Concentration)" if "concentration" in spell["duration"][0].keys() else "") + "\n" + \
-        "**Description:** " + entriesParsing(spell["entries"]) + \
-        (entriesParsing(spell["entriesHigherLevel"]) if "entriesHigherLevel" in spell.keys() else "") + \
-        "**Classes:** " + ", ".join([c for c in ([cclass["name"] for cclass in spell["classes"]["fromClassList"] if cclass["source"] in ["PHB", "XGE"]] + \
-        ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
-        if "subSubclass" in subclass["subclass"].keys() else "") for subclass in spell["classes"]["fromSubclass"] \
-        if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
-        if "fromSubclass" in spell["classes"].keys() else [])) if c]) + "\n" + \
-        "**Book:** " + spell["source"]
-
 def randomSpell(spells):
     return random.choice(spells)
 
 def spellSearchAssistant(spell, left, right):
     if left == "level":
-        if str(spell["level"]) != right:
+        if spell.level != right:
             return False
     elif left == "school":
-        if right not in [schools[spell["school"]].lower(), spell["school"].lower()]:
+        if right not in [schools[spell.school].lower(), spell.school.lower()]:
             return False
     elif left == "source":
-        if right not in spell["source"].lower():
+        if right not in spell.source.lower():
             return False
-    elif left in ["v", "s", "m"]:
-        if right in ["t", "true"]:
-            if left not in spell["components"].keys():
-                return False
-        elif right in ["f", "false"]:
-            if left in spell["components"].keys():
-                return False
+    elif left == "v":
+        if right in ["t", "true"] and not spell.v:
+            return False
+        elif right in ["f", "false"] and spell.v:
+            return False
+    elif left == "s":
+        if right in ["t", "true"] and not spell.s:
+            return False
+        elif right in ["f", "false"] and spell.s:
+            return False
+    elif left == "m":
+        if right in ["t", "true"] and not spell.m:
+            return False
+        elif right in ["f", "false"] and spell.m:
+            return False
     elif left == "class":
-        if right not in [c["name"].lower().replace(" ", "") for c in spell["classes"]["fromClassList"]]:
+        if right not in [c["name"].lower().replace(" ", "") for c in spell.classes]:
             return False
     elif left == "subclass":
-        if "fromSubclass" in spell["classes"].keys():
-            if right in [c["subclass"]["name"].lower().replace(" ", "") for c in spell["classes"]["fromSubclass"]]:
+        if spell.subclasses:
+            if right in [c["subclass"]["name"].lower().replace(" ", "") for c in spell.subclasses]:
                 return True
-            elif right in [c["subclass"]["subSubclass"].lower() \
-            for c in spell["classes"]["fromSubclass"] if "subSubclass" in c["subclass"].keys()]:
+            elif right in [c["subclass"]["subSubclass"].lower() for c in spell.subclasses if "subSubclass" in c["subclass"].keys()]:
                 return True
             else:
                 return False
         else:
             return False
     elif left == "concentration":
-        if right in ["t", "true"]:
-            if "concentration" not in spell["duration"][0].keys():
-                return False
-        elif right in ["f", "false"]:
-            if "concentration" in spell["duration"][0].keys():
-                return False
+        if right in ["t", "true"] and not spell.concentration:
+            return False
+        elif right in ["f", "false"] and spell.concentration:
+            return False
     elif left == "ritual":
-        if right in ["t", "true"]:
-            if "meta" not in spell.keys() or "ritual" not in spell["meta"].keys():
-                return False
-        elif right in ["f", "false"]:
-            if "meta" in spell.keys() and "ritual" in spell["meta"].keys():
-                return False
+        if right in ["t", "true"] and not spell.ritual:
+            return False
+        elif right in ["f", "false"] and spell.ritual:
+            return False
     elif left == "name":
-        if right not in spell["name"].lower().replace(" ", "").replace("'", ""):
+        if right.replace(" ", "") not in spell.id:
             return False
     return True
 
@@ -369,14 +387,14 @@ def spellSearch(spells, filterList):
                             valid = False
                             break
             if valid:
-                returnList.append(spell["name"])
+                returnList.append(spell.name)
         return sorted(returnList)
     except Exception as e:
         print(e)
         return ["Filter command exception"]
 
 def runServer():
-    spells = [spell for spell in json.load(open("spells.json")) if spell["source"] in ["PHB", "XGE"]]
+    spells = [Spell(spell) for spell in json.load(open("spells.json")) if spell["source"] in ["PHB", "XGE"]]
     print("Loaded", len(spells), "spells")
 
     spellbooks = dict()
@@ -448,13 +466,13 @@ def runServer():
                     toSend = "No valid spells found"
                 elif len(returnList) == 1:
                     found, result = spellFinder(spells, returnList[0])
-                    toSend = spellText(result)
+                    toSend = result.spellText()
                 else:
                     toSend = ", ".join(returnList)
         else:
             found, result = spellFinder(spells, message.content)
             if found:
-                toSend = spellText(result)
+                toSend = result.spellText()
             else:
                 toSend = result
 
