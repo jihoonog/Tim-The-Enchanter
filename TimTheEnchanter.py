@@ -170,6 +170,7 @@ def spellbookParser(spells, spellbooks, command):
                         reply += "Added " + result["name"] + " to " + sbresult + "\n"
                     else:
                         reply += result + "\n"
+                return reply
             else:
                 return sbresult
         elif command[1] == "multiremove":
@@ -183,6 +184,7 @@ def spellbookParser(spells, spellbooks, command):
                         reply += "Removed " + result["name"] + " from " + sbresult + "\n"
                     else:
                         reply += result + "\n"
+                return reply
             else:
                 return sbresult
         elif command[1] == "list":
@@ -438,7 +440,7 @@ def runServer():
 
         elif message.content[:6].lower() == "search":
             if message.content[:11].lower() == "search help":
-                toSend = "**Valid Search Filters:**\nlevel, school, class, subclass, concentration, ritual, source, v, s, m\n**Usage**: \
+                toSend = "**Valid Search Filters:**\nname, level, school, class, subclass, concentration, ritual, source, v, s, m\n**Usage**: \
                 \nfilter=value or filter=value1|value2"
             else:
                 returnList = spellSearch(spells, message.content[6:].lower().split())
