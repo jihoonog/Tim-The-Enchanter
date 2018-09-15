@@ -526,7 +526,7 @@ def runServer():
                 for x in range(int(message.content[10:]) if message.content[10:] else 1):
                     toSend += random.choice(items).itemText() + "\n\n"
             else:
-                found, result = itemFinder(items)
+                found, result = itemFinder(items, message.content[4:])
                 if found:
                     toSend = result.itemText()
                 else:
