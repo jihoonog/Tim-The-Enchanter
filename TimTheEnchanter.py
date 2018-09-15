@@ -33,7 +33,7 @@ class Spell:
         "**Range:** " + self.rangecount + self.rangetype + "\n" + \
         "**Components:** " + self.v + self.s + self.m + "\n" + \
         "**Duration:** " + self.duration + self.concentration + "\n" + \
-        "**Description:** " + self.entries + self.entriesLS + \
+        "**Description:** " + self.entries + self.entriesHL + \
         "**Classes:** " + ", ".join([c for c in ([cclass["name"] for cclass in self.classes if cclass["source"] in ["PHB", "XGE"]] + \
         ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
         if "subSubclass" in subclass["subclass"].keys() else "") for subclass in self.subclasses \
