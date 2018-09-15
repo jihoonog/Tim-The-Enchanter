@@ -52,11 +52,15 @@ sb saveall
 
 sb loadall
 
+sb _book_ list
+
 sb _book_ add spellName
 
 sb _book_ remove spellName
 
-sb _book_ list
+sb _book_ multiadd spellName|spellName...
+
+sb _book_ multiremove spellName|spellName...
 
 sb _book_ bulkadd filters
 
@@ -64,7 +68,10 @@ sb _book_ bulkremove filters
 
 sb _book_ search filters
 
+
 #### full filter list:
+
+name
 
 level
 
