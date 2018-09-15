@@ -4,10 +4,12 @@ schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantme
 
 class Item:
     def __init__(self, item):
+        self.fullString = str(item)
         self.name = item["name"]
+        self.id = item["name"].lower().replace(" ", "").replace("'", "")
 
     def itemText(self):
-        return ""
+        return self.fullString
 
 class Backpack:
     def __init__(self, name):
@@ -67,6 +69,26 @@ class Spellbook:
             self.spells.remove(spell)
         except:
             pass
+
+def itemFinder(items, itemName):
+    savedItem = None
+    text = []
+    for item in items:
+        if item.id == itemName.lower().replace("'", "").replace(" ", ""):
+            return True, item
+        elif itemName.lower().replace("'", "").replace(" ", "") in item.id:
+            if not savedItem:
+                savedItem = item
+            else:
+                text.append(item.name)
+    if not savedItem:
+        return False, "Spell not found"
+    elif text == []:
+        return True, savedItem
+    else:
+        text.append(savedItem.name)
+        return False, "? ".join(sorted(text)) + "?"
+
 
 def spellFinder(spells, spellName):
     savedSpell = None
@@ -319,9 +341,6 @@ def entriesParsing(entries):
                 text = text + "****Special, See Guide****\n"
     return text
 
-def randomSpell(spells):
-    return random.choice(spells)
-
 def spellSearchAssistant(spell, left, right):
     if left == "level":
         if spell.level != right:
@@ -455,7 +474,7 @@ def runServer():
 
         elif message.content[:6].lower() == "random":
             for x in range(int(message.content[6:]) if message.content[6:] else 1):
-                toSend += randomSpell(spells).spellText() + "\n\n"
+                toSend += random.choice(spells).spellText() + "\n\n"
 
         elif message.content[:2].lower() == "sb":
             toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
@@ -478,6 +497,20 @@ def runServer():
             if message.content[:11].lower() == "search help":
                 toSend = "**Valid Search Filters:**\nname, level, school, class, subclass, concentration, ritual, source, v, s, m\n**Usage**: \
                 \nfilter=value or filter=value1|value2"
+            elif message.content[:13].lower() == "search random":
+                filterList = message.content[:13].lower().split()
+                count = int(filterList.pop(0))
+                returnList = spellSearch(spells, filterList)
+                if len(returnList) == 0:
+                    toSend = "No valid spells found"
+                elif len(returnList) == 1:
+                    found, result = spellFinder(spells, returnList[0])
+                    toSend = result.spellText()
+                else:
+                    tempList = []
+                    for x in range(count):
+                         tempList.append(random.choice(returnList))
+                    toSend = ", ".join(tempList)
             else:
                 returnList = spellSearch(spells, message.content[6:].lower().split())
                 if len(returnList) == 0:
@@ -487,6 +520,18 @@ def runServer():
                     toSend = result.spellText()
                 else:
                     toSend = ", ".join(returnList)
+
+        elif message.content[:4].lower() == "item":
+            if message.content[:10].lower() == "itemrandom":
+                for x in range(int(message.content[10:]) if message.content[10:] else 1):
+                    toSend += random.choice(items).itemText() + "\n\n"
+            else:
+                found, result = itemFinder(items)
+                if found:
+                    toSend = result.itemText()
+                else:
+                    toSend = result
+
         else:
             found, result = spellFinder(spells, message.content)
             if found:
