@@ -22,7 +22,7 @@ class Spellbook:
 
 def spellFinder(spells, spellName):
     savedSpell = None
-    text = ""
+    text = []
     for spell in spells:
         if spell["name"].lower().replace("'", "").replace(" ", "") == spellName.lower().replace("'", "").replace(" ", ""):
             return True, spell
@@ -30,18 +30,18 @@ def spellFinder(spells, spellName):
             if not savedSpell:
                 savedSpell = spell
             else:
-                text = text + spell["name"] + "? "
+                text.append(spell["name"])
     if not savedSpell:
         return False, "Spell not found"
-    elif text == "":
+    elif text == []:
         return True, savedSpell
     else:
-        text = savedSpell["name"] + "? " + text
-        return False, text
+        text.append(savedSpell["name"])
+        return False, "? ".join(sorted(text)) + "?"
 
 def spellbookFinder(spellbooks, spellbookName):
     savedSpellbook = None
-    text = ""
+    text = []
     for spellbook in spellbooks.keys():
         if spellbook.lower().replace("'", "").replace(" ", "") == spellbookName.lower().replace("'", "").replace(" ", ""):
             return True, spellbook
@@ -49,14 +49,14 @@ def spellbookFinder(spellbooks, spellbookName):
             if not savedSpellbook:
                 savedSpellbook = spellbook
             else:
-                text = text + spellbook + "? "
+                text.append(spellbook)
     if not savedSpellbook:
         return False, "Spellbook not found"
-    elif text == "":
+    elif text == []:
         return True, savedSpellbook
     else:
-        text = savedSpellbook + "? " + text
-        return False, text
+        text.append(savedSpellbook)
+        return False, "? ".join(sorted(text)) + "?"
 
 def parseDice(rolls, multiplier):
     try:
