@@ -82,7 +82,7 @@ def itemFinder(items, itemName):
             else:
                 text.append(item.name)
     if not savedItem:
-        return False, "Spell not found"
+        return False, "Item not found"
     elif text == []:
         return True, savedItem
     else:
@@ -498,7 +498,7 @@ def runServer():
                 toSend = "**Valid Search Filters:**\nname, level, school, class, subclass, concentration, ritual, source, v, s, m\n**Usage**: \
                 \nfilter=value or filter=value1|value2"
             elif message.content[:13].lower() == "search random":
-                filterList = message.content[:13].split()
+                filterList = message.content[13:].lower().split()
                 count = int(filterList.pop(0))
                 returnList = spellSearch(spells, filterList)
                 if len(returnList) == 0:
