@@ -2,8 +2,20 @@ import discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 
-class Spell:
+class Item:
+    def __init__(self, item):
+        self.name = item["name"]
 
+    def itemText(self):
+        return ""
+
+class Backpack:
+    def __init__(self, name):
+        self.name = name
+        self.items = list()
+        self.weight = 0
+
+class Spell:
     def __init__(self, spell):
         self.name = spell["name"]
         self.id = spell["name"].lower().replace(" ", "").replace("'", "")
@@ -402,6 +414,12 @@ def runServer():
         spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
     print("Loaded", len(spellbooks.keys()), "spellbooks")
 
+    items = [Items(item) for item in json.load(open("item.json"))["item"]]
+    print("Loaded", len(items), "items")
+
+    backpacks = dict()
+    print("Loaded", len(backpacks.keys()), "backpacks")
+
     token = open("token.txt").readline().strip()
     print("Loaded token", token)
 
@@ -437,7 +455,7 @@ def runServer():
 
         elif message.content[:6].lower() == "random":
             for x in range(int(message.content[6:]) if message.content[6:] else 1):
-                toSend += spellText(randomSpell(spells)) + "\n\n"
+                toSend += randomSpell(spells).spellText() + "\n\n"
 
         elif message.content[:2].lower() == "sb":
             toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
