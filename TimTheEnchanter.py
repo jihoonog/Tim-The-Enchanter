@@ -419,7 +419,7 @@ def runServer():
 
         elif message.content[:6].lower() == "random":
             for x in range(int(message.content[6:]) if message.content[6:] else 1):
-                toSend += spellText(randomSpell(spells)) + "\n"
+                toSend += spellText(randomSpell(spells)) + "\n\n"
 
         elif message.content[:2].lower() == "sb":
             toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
