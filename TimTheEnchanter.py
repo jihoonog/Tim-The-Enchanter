@@ -159,6 +159,32 @@ def spellbookParser(spells, spellbooks, command):
                     return result
             else:
                 return sbresult
+        elif command[1] == "multiadd":
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                reply = ""
+                for spell in "".join(command[2:]).split("|"):
+                    found, result = spellFinder(spells, spell.lower().replace(" ", "").replace("'", ""))
+                    if found:
+                        spellbooks[sbresult].addSpell(result)
+                        reply += "Added " + result["name"] + " to " + sbresult + "\n"
+                    else:
+                        reply += result + "\n"
+            else:
+                return sbresult
+        elif command[1] == "multiremove":
+            sbfound, sbresult = spellbookFinder(spellbooks, command[0])
+            if sbfound:
+                reply = ""
+                for spell in "".join(command[2:]).split("|"):
+                    found, result = spellFinder(spells, spell.lower().replace(" ", "").replace("'", ""))
+                    if found:
+                        spellbooks[sbresult].removeSpell(result)
+                        reply += "Removed " + result["name"] + " from " + sbresult + "\n"
+                    else:
+                        reply += result + "\n"
+            else:
+                return sbresult
         elif command[1] == "list":
             sbfound, sbresult = spellbookFinder(spellbooks, command[0])
             if sbfound:
@@ -312,6 +338,9 @@ def spellSearchAssistant(spell, left, right):
         elif right in ["f", "false"]:
             if "meta" in spell.keys() and "ritual" in spell["meta"].keys():
                 return False
+    elif left == "name":
+        if right not in spell["name"].lower().replace(" ", "").replace("'", ""):
+            return False
     return True
 
 def spellSearch(spells, filterList):
@@ -374,6 +403,9 @@ def runServer():
         elif len(message.attachments) > 0:
             return
 
+        elif len(message.content) == 0:
+            return
+
         print("Got Command:", message.content)
         toSend = ""
 
@@ -383,8 +415,9 @@ def runServer():
         elif message.content[:5].lower() == "croll":
             toSend = parseDice(message.content[5:], 2)
 
-        elif message.content.lower() in ["random", "r"]:
-            toSend = spellText(randomSpell(spells))
+        elif message.content[:6].lower() == "random":
+            for x in range(int(message.content[6:]) if message.content[6:] else 1):
+                toSend += spellText(randomSpell(spells)) + "\n"
 
         elif message.content[:2].lower() == "sb":
             toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
