@@ -8,7 +8,7 @@ class Item:
         self.id = item["name"].lower().replace(" ", "").replace("'", "")
         self.attrlist = []
         for k, v in item.items():
-            self.arrrlist.append(k)
+            self.attrlist.append(k)
             setattr(self, k, v)
 
     def itemText(self):
