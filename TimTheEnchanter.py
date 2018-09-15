@@ -38,7 +38,7 @@ class Spell:
         ([subclass["class"]["name"] + "-" + subclass["subclass"]["name"] + ("-" + subclass["subclass"]["subSubclass"] \
         if "subSubclass" in subclass["subclass"].keys() else "") for subclass in self.subclasses \
         if subclass["class"]["source"] in ["PHB", "XGE"] and subclass["subclass"]["source"] in ["PHB", "XGE"]] \
-        if "fromSubclass" in spell["classes"].keys() else [])) if c]) + "\n" + \
+        if self.subclasses else [])) if c]) + "\n" + \
         "**Book:** " + self.source
 
 class Spellbook:
