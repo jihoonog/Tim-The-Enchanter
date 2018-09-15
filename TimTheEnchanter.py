@@ -414,7 +414,7 @@ def runServer():
         spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
     print("Loaded", len(spellbooks.keys()), "spellbooks")
 
-    items = [Items(item) for item in json.load(open("items.json"))["item"]]
+    items = [Item(item) for item in json.load(open("items.json"))["item"]]
     print("Loaded", len(items), "items")
 
     backpacks = dict()
