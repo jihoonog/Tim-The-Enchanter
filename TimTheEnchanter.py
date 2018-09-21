@@ -1,4 +1,4 @@
-import discord, json, os, pickle, random, re
+import copy, discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 
@@ -12,15 +12,45 @@ class Item:
             setattr(self, k, v)
         print(self.id)
         self.entries = entriesParsing(item["entries"]) if "entries" in item.keys() else ""
+        try:
+            self.weight = float(item["weight"])
+        except:
+            self.weight = 0
 
     def itemText(self):
         return "\n".join([str(k) + " : " + str(getattr(self, k)) for k in self.attrlist])
 
 class Backpack:
-    def __init__(self, name):
+    def __init__(self, name, strength, hidden):
+        self.items = []
         self.name = name
-        self.items = list()
+        self.strength = strength
+        self.hidden = hidden
+        self.pp = 0
+        self.gp = 0
+        self.ep = 0
+        self.sp = 0
+        self.cp = 0
+        self.food = 0
         self.weight = 0
+
+    def buy(self, item):
+        pass
+
+    def find(self, item):
+        pass
+
+    def sell(self, item):
+        pass
+
+    def ditch(self, item):
+        pass
+
+    def money(self, change):
+        pass
+
+    def move(self, destination):
+        pass
 
 class Spell:
     def __init__(self, spell):
@@ -75,6 +105,20 @@ class Spellbook:
         except:
             pass
 
+def itemBuilder(text):
+    segments = text.split("|")
+    item = dict()
+    for attr in segments:
+        try:
+            key, value = attr.split(":")
+            item[key.lower().replace(" ", "")] = value
+        except:
+            print("Error", attr)
+    if "name" not in item.keys():
+        return False, "Missing Name"
+    else:
+        return True, item
+
 def itemFinder(items, itemName):
     savedItem = None
     text = []
@@ -94,6 +138,8 @@ def itemFinder(items, itemName):
         text.append(savedItem.name)
         return False, "? ".join(sorted(text)) + "?"
 
+def backpackParser(items, backpacks, command):
+    return False, ""
 
 def spellFinder(spells, spellName):
     savedSpell = None
@@ -441,10 +487,15 @@ def runServer():
         spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
     print("Loaded", len(spellbooks.keys()), "spellbooks")
 
-    items = [Item(item) for item in json.load(open("items.json"))["item"]]
+    itemsjson = None
+    with open("items.json") as f:
+        itemsjson = json.load(open("items.json"))
+    items = [Item(item) for item in itemsjson["item"]]
     print("Loaded", len(items), "items")
 
     backpacks = dict()
+    for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
+        spellbooks[file[:-7]] = pickle.load(open("backpacks/" + file, 'rb'))
     print("Loaded", len(backpacks.keys()), "backpacks")
 
     token = open("token.txt").readline().strip()
@@ -486,6 +537,9 @@ def runServer():
 
         elif message.content[:2].lower() == "sb":
             toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
+
+        elif message.content[:2].lower() == "bp":
+            toSend = backpackParser(items, backpacks, message.content[2:].lower().split())
 
         elif message.content.lower().replace(" ", "") == "whoareyou?":
             toSend = "There are some who call me... ***Tim***"
@@ -533,6 +587,24 @@ def runServer():
             if message.content[:10].lower() == "itemrandom":
                 for x in range(int(message.content[10:]) if message.content[10:] else 1):
                     toSend += random.choice(items).itemText() + "\n\n"
+
+            elif message.content[:7].lower() == "itemnew":
+                success, result = itemBuilder(message.content[7:])
+                if success:
+                    itemsjson["item"].append(result)
+                    items.append(Item(result))
+                    toSend = result["name"] + " created"
+                else:
+                    toSend = result
+
+            elif message.content[:8].lower() == "itemsave":
+                try:
+                    with open("items.json", "w") as f:
+                        json.dump(itemsjson, f, indent=4)
+                    toSend = "Saved items"
+                except:
+                    toSend = "Failed to save items"
+
             else:
                 found, result = itemFinder(items, message.content[4:])
                 if found:
