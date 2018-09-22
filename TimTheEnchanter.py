@@ -1,28 +1,44 @@
 import copy, discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
+moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
 
 class Item:
     def __init__(self, item):
         self.fullString = str(item)
         self.id = item["name"].lower().replace(" ", "").replace("'", "")
-        self.attrlist = []
+        self.attrlist = ["weight", "value"]
         for k, v in item.items():
-            self.attrlist.append(k)
-            setattr(self, k, v)
-        print(self.id)
-        self.entries = entriesParsing(item["entries"]) if "entries" in item.keys() else ""
+            if k in ["weight", "value", "type"]:
+                continue
+            elif k == "entries":
+                self.entries = entriesParsing(v)
+                self.attrlist.append("entries")
+            else:
+                self.attrlist.append(k)
+                setattr(self, k, v)
+        try:
+            num, value = item["value"][:-2], item["value"][-2:]
+            self.value = int(num) * moneyvalue[value]
+        except:
+            self.value = 0
+
         try:
             self.weight = float(item["weight"])
         except:
-            self.weight = 0
+            self.weight = 0.0
+
+        try:
+            self.type = item["type"]
+        except:
+            self.type = ""
 
     def itemText(self):
-        return "\n".join([str(k) + " : " + str(getattr(self, k)) for k in self.attrlist])
+        return "\n".join([str(k) + ": " + str(getattr(self, k)) for k in self.attrlist])
 
 class Backpack:
     def __init__(self, name, strength, hidden):
-        self.items = []
+        self.itemlist = []
         self.name = name
         self.strength = strength
         self.hidden = hidden
@@ -31,26 +47,176 @@ class Backpack:
         self.ep = 0
         self.sp = 0
         self.cp = 0
-        self.food = 0
+        self.foodcount = 0
         self.weight = 0
 
-    def buy(self, item):
-        pass
+    def shiftDown(self):
+        types = ["cp", "sp", "gp", "pp"]
+        for i in range(3):
+            while getattr(self, types[i]) < 0:
+                setattr(self, types[i+1], getattr(self, types[i+1])-1)
+                setattr(self, types[i], getattr(self, types[i])+10)
+        self.weigh()
+        return "Made change"
 
-    def find(self, item):
-        pass
+    def shiftUp(self):
+        types = ["cp", "sp", "gp", "pp"]
+        for i in range(3):
+            while getattr(self, types[i]) > 9:
+                setattr(self, types[i+1], getattr(self, types[i+1])+1)
+                setattr(self, types[i], getattr(self, types[i])-10)
+        self.weigh()
+        return "Condensed money"
 
-    def sell(self, item):
-        pass
+    def buy(self, itemName, items):
+        found, result = itemFinder(items, itemName)
+        if found:
+            if (self.cp + (self.sp*10) + (self.gp*100) + (self.pp*1000)) >= result.value:
+                self.cp -= result.value
+                self.shiftDown()
+                self.itemlist.append(copy.deepcopy(result))
+                self.weight += result.weight
+                return "Purchased " + result.name
+            else:
+                return "Insufficient Funds"
+        else:
+            return result
 
-    def ditch(self, item):
-        pass
+    def find(self, itemName, items):
+        found, result = itemFinder(items, itemName)
+        if found:
+            self.itemlist.append(copy.deepcopy(result))
+            self.weight += result.weight
+            return "Added " + result.name
+        else:
+            return result
+
+    def sell(self, itemName):
+        found, result = itemFinder(self.itemlist, itemName)
+        if found:
+            self.itemlist.remove(result)
+            self.weight -= result.weight
+            value = result.value
+            if result.type not in ["$", "TG"]:
+                value == value // 2
+            text = "Sold " + result.name + " for " + value
+            while value >= 1000:
+                value -= 1000
+                self.pp += 1
+            while value >= 100:
+                value -= 100
+                self.gp += 1
+            while value >= 10:
+                value -= 10
+                self.sp += 1
+            self.cp += value
+            self.weigh()
+            return text
+        else:
+            return result
+
+    def ditch(self, itemName):
+        found, result = itemFinder(self.itemlist, itemName)
+        if found:
+            self.itemlist.remove(result)
+            self.weight -= result.weight
+            return "Removed " + result.name
+        else:
+            return result
 
     def money(self, change):
-        pass
+        values = change.split()
+        for v in values:
+            try:
+                sign = 1 if v[:1] else -1
+                v = v[1:]
+                coin = v[-2:]
+                v = v[:-2]
+                amount = int(v) * sign
+                setattr(self, coin, getattr(self, coin) + amount)
+            except:
+                pass
+        self.weigh()
+        return "Changed money"
 
-    def move(self, destination):
-        pass
+    def move(self, itemName, destination):
+        found, result = itemFinder(self.itemlist, itemName)
+        if found:
+            self.itemlist.remove(result)
+            destination.itemlist.append(result)
+            destination.weigh()
+            self.weigh()
+            return "Moved " + result.name + " to " + destination.name
+        else:
+            return result
+
+    def edit(self, itemName, attributes):
+        found, result = itemFinder(self.itemlist, itemName)
+        if found:
+            attributes = attributes.split("|")
+            for a in attributes:
+                try:
+                    key, value = a.split(":")
+                    setattr(result, key, value)
+                except Exception as e:
+                    print(e)
+            self.weigh()
+            return result.itemText()
+        else:
+            return result
+
+    def use(self, itemName):
+        found, result = itemFinder(self.itemlist, itemName)
+        if found:
+            if "uses" in result.keys():
+                setattr(result, "uses", getattr(result, "uses")-1)
+                return getattr(result, "uses") + " uses left"
+            else:
+                return "No uses on item"
+        else:
+            return result
+
+    def weigh(self):
+        self.weight = 0.0
+        self.weight += (self.pp+self.gp+self.ep+self.sp+self.cp)*0.02
+        self.weight += self.foodcount * 2.0
+        for item in self.itemlist:
+            self.weight += item.weight
+        return str(self.weight) + " pounds of weight. (Encumberance Capacity: " + str(self.strength*10) + " pounds)"
+
+    def food(self, command):
+        action = command.split()
+        if action[0] == "eat":
+            if self.foodcount > 0:
+                self.foodcount -= 1
+                self.weight -= 2
+                return "Ate food. " + str(self.foodcount) + " left"
+            else:
+                return "No food"
+        elif action[0] == "buy":
+            count = int(action[1])
+            if (self.cp + (self.sp*10) + (self.gp*100) + (self.pp*1000)) >= count*50:
+                self.foodcount += count
+                self.cp -= count*50
+                self.shiftDown()
+                self.weigh()
+                return "Bought " + str(count) + " food"
+        elif action[0] == "add":
+            count = int(action[1])
+            self.foodcount += count
+            self.weigh()
+            return "Added " + str(count) + " food"
+
+    def list(self):
+        return str(self.pp) + "pp " + str(self.gp) + "gp " + str(self.ep) + "ep " + str(self.sp) + "sp " + str(self.cp) + "cp " + str(self.foodcount) + " food\n" + ", ".join([item.name for item in self.itemlist]) + "\nWeight: " + str(self.weight) + " (Encumberance Capacity: " + str(self.strength*10) + " pounds)"
+
+    def info(self, itemName):
+        self.weigh()
+        found, result = itemFinder(self.itemlist, itemName)
+        if found:
+            return result.itemText()
+        else:
+            return result
 
 class Spell:
     def __init__(self, spell):
@@ -138,8 +304,114 @@ def itemFinder(items, itemName):
         text.append(savedItem.name)
         return False, "? ".join(sorted(text)) + "?"
 
+def backpackFinder(backpacks, backpackName):
+    savedBackpack = None
+    text = []
+    for backpack in backpacks.keys():
+        if backpack.lower().replace("'", "").replace(" ", "") == backpackName.lower().replace("'", "").replace(" ", ""):
+            return True, backpack
+        elif backpackName.lower().replace("'", "").replace(" ", "") in backpack.lower().replace("'", "").replace(" ", ""):
+            if backpacks[backpack].hidden:
+                continue
+            if not savedBackpack:
+                savedBackpack = backpack
+            else:
+                text.append(backpack)
+    if not savedBackpack:
+        return False, "Backpack not found"
+    elif text == []:
+        return True, savedBackpack
+    else:
+        text.append(savedBackpack)
+        return False, "? ".join(sorted(text)) + "?"
+
 def backpackParser(items, backpacks, command):
-    return False, ""
+    try:
+        if command[0] == "list":
+            if len(command) > 1:
+                bpfound, bpresult = backpackFinder(backpacks, command[1])
+                if bpfound:
+                    backpacks[bpresult].list()
+                else:
+                    return bpresult
+            text = ", ".join([bp for bp in backpacks.keys() if backpacks[bp].hidden == False])
+            return text if text else "No backpacks found"
+        elif command[0] == "new":
+            if command[1].isalpha():
+                if command[1] not in backpacks.keys():
+                    backpacks[command[1]] = Backpack(command[1], int(command[2]) if len(command) >= 3 else 0, True if len(command) >= 4 and command[3] == "true" else False)
+                    return "Created backpack " + command[1]
+                else:
+                    return "Backpack already exists"
+            else:
+                return "Please use letters exclusively for the backpack name"
+        elif command[0] == "delete":
+            try:
+                del backpacks[command[1]]
+                return "Deleted backpack " + command[1]
+            except:
+                return "Backpack doesn't exist"
+        elif command[0] == "save":
+            bpfound, bpresult = backpackFinder(backpacks, command[1])
+            if sbfound:
+                pickle.dump(backpacks[bpresult], open("backpacks/" + bpresult + '.pickle', 'wb'))
+                return "Sucessfully saved " + bpresult
+            else:
+                return bpresult
+        elif command[0] in ["fullsave", "saveall"]:
+            for backpack in backpacks.keys():
+                pickle.dump(backpacks[backpack], open("backpacks/" + backpack + '.pickle', 'wb'))
+            return "Saved all backpacks"
+        elif command[0] == "load":
+            try:
+                backpacks[command[1]] = pickle.load(open("backpacks/" + command[1] + '.pickle', 'rb'))
+                return "Sucessfully loaded " + command[1]
+            except:
+                return "Backpack not found"
+        elif command[0] in ["fullload", "loadall"]:
+            for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
+                backpacks[file[:-7]] = pickle.load(open("backpacks/" + file, 'rb'))
+            return "Loaded all backpacks"
+        else:
+            bpfound, bpresult = backpackFinder(backpacks, command[0])
+            if bpfound:
+                bp = backpacks[bpresult]
+                if command[1] == "list":
+                    return bp.list()
+                elif command[1] == "buy":
+                    return bp.buy(" ".join(command[2:]), items)
+                elif command[1] in ["add", "find"]:
+                    return bp.find(" ".join(command[2:]), items)
+                elif command[1] == "sell":
+                    return bp.sell(" ".join(command[2:]))
+                elif command[1] == ["remove", "ditch"]:
+                    return bp.ditch(" ".join(command[2:]))
+                elif command[1] == "money":
+                    return bp.money(" ".join(command[2:]))
+                elif command[1] == "move":
+                    return bp.move(command[2], backpacks[command[3]])
+                elif command[1] == "weigh":
+                    return bp.weigh()
+                elif command[1] == "info":
+                    return bp.info(" ".join(command[2:]))
+                elif command[1] == "use":
+                    return bp.use(" ".join(command[2:]))
+                elif command[1] == "edit":
+                    return bp.edit(command[2], " ".join(command[2:]))
+                elif command[1] == "thin":
+                    return bp.shiftUp()
+                elif command[1] == "food":
+                    return bp.food(command[2] + (" " + command[3] if len(command) > 3 else ""))
+                elif command[1] == "strength":
+                    bp.strength = int(command[2])
+                    return "Changed strength of " + bp.name + " to " + command[2]
+                else:
+                    return "Invalid backpack command"
+            else:
+                return "Backpack not found"
+    except Exception as e:
+        print(e)
+        return "Backpack command exception"
 
 def spellFinder(spells, spellName):
     savedSpell = None
@@ -549,6 +821,10 @@ def runServer():
                 await message.channel.send("Ok, Good Night")
                 for spellbook in spellbooks.keys():
                     pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
+                for backpack in backpacks.keys():
+                    pickle.dump(backpacks[backpack], open("backpacks/" + backpack + '.pickle', 'wb'))
+                with open("items.json", "w") as f:
+                    json.dump(itemsjson, f, indent=4)
                 client.logout()
                 client.close()
                 quit()
@@ -597,6 +873,13 @@ def runServer():
                 else:
                     toSend = result
 
+            elif message.content[:10].lower() == "itemdelete":
+                try:
+                    del itemsjson["item"][message.content[10:]]
+                    toSend = "Item deleted"
+                except:
+                    toSend = "Delete failed"
+
             elif message.content[:8].lower() == "itemsave":
                 try:
                     with open("items.json", "w") as f:
@@ -605,6 +888,10 @@ def runServer():
                 except:
                     toSend = "Failed to save items"
 
+            elif message.content.lower() == "itemreload":
+                #items = [Item(item) for item in itemsjson["item"]]
+                toSend = "(Not implmented) Items reloaded"
+
             else:
                 found, result = itemFinder(items, message.content[4:])
                 if found:
@@ -612,12 +899,22 @@ def runServer():
                 else:
                     toSend = result
 
-        else:
-            found, result = spellFinder(spells, message.content)
+        elif message.content[:5].lower() == "spell":
+            found, result = spellFinder(spells, message.content[5:])
             if found:
                 toSend = result.spellText()
             else:
                 toSend = result
+
+        else:
+            spellfound, spellresult = spellFinder(spells, message.content)
+            itemfound, itemresult = itemFinder(items, message.content)
+            if spellfound:
+                toSend = spellresult.spellText()
+            elif itemfound:
+                toSend = itemresult.itemText()
+            else:
+                toSend = spellresult + "\n" + itemresult
 
         print("Responding With:", toSend)
         if toSend == "":

@@ -13944,6 +13944,11 @@
             "weight": "8",
             "description": "Walter's stone quarter staff, It also doubles as a spellcasting focus. It's on 4 stone wheels but it's still heavy as hell.",
             "attack": "1d6 Bludgeoning"
+        },
+        {
+            "name": "Walter's Spellbook",
+            "weight": "4",
+            "description": "Walter's signature spellbook. It's made of stone because he's an idiot (and a pyromaniac.)"
         }
     ]
 }
