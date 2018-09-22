@@ -875,7 +875,9 @@ def runServer():
 
             elif message.content[:10].lower() == "itemdelete":
                 try:
-                    del itemsjson["item"][message.content[10:]]
+                    for item in itemsjson["item"]:
+                        if item["name"] == message.content[10:].strip():
+                            del item
                     toSend = "Item deleted"
                 except:
                     toSend = "Delete failed"
@@ -889,8 +891,9 @@ def runServer():
                     toSend = "Failed to save items"
 
             elif message.content.lower() == "itemreload":
-                #items = [Item(item) for item in itemsjson["item"]]
-                toSend = "(Not implmented) Items reloaded"
+                del items[:]
+                items.extend([Item(item) for item in itemsjson["item"]])
+                toSend = "Items reloaded"
 
             else:
                 found, result = itemFinder(items, message.content[4:])
