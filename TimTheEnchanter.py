@@ -7,15 +7,15 @@ class Item:
     def __init__(self, item):
         self.fullString = str(item)
         self.id = item["name"].lower().replace(" ", "").replace("'", "")
-        self.attrlist = ["weight", "value"]
+        self.attrlist = set(["weight", "value"])
         for k, v in item.items():
             if k in ["weight", "value", "type"]:
                 continue
             elif k == "entries":
                 self.entries = entriesParsing(v)
-                self.attrlist.append("entries")
+                self.attrlist.add("entries")
             else:
-                self.attrlist.append(k)
+                self.attrlist.add(k)
                 setattr(self, k, v)
         try:
             num, value = item["value"][:-2], item["value"][-2:]
@@ -33,8 +33,50 @@ class Item:
         except:
             self.type = ""
 
+    def editAttr(self, key, value):
+        setattr(self, key, value)
+        self.attrlist.add(key)
+
+    def removeAttr(self, key):
+        self.attrlist.discard(key)
+
+    def debugText(self):
+        return "\n".join([str(k) + ": " + str(vars(self)[k]) for k in vars(self).keys()])
+
+    def fullText(self):
+        text = ""
+        text += "**Name**: " + self.name + "\n"
+        if self.weight > 0:
+            text += "**Weight**: " + str(self.weight) + "\n"
+        if self.value > 0:
+            text += "**Value**: " + str(self.value/100) + "gp\n"
+        if "uses" in self.attrlist:
+            text += "**Uses Left**: " + str(self.uses) + "\n"
+        if "entries" in self.attrlist:
+            text += "**Description**: " + self.entries + "\n"
+        if "notes" in self.attrlist:
+            text += "**Notes**: " + self.notes + "\n"
+        for x in self.attrlist:
+            if x in ["name", "weight", "value", "entries", "uses", "notes"]:
+                continue
+            else:
+                text += "**" + x + "**: " + str(getattr(self, x)) + "\n"
+        return text
+
     def itemText(self):
-        return "\n".join([str(k) + ": " + str(getattr(self, k)) for k in self.attrlist])
+        text = ""
+        text += "**Name**: " + self.name + "\n"
+        if self.weight > 0:
+            text += "**Weight**: " + str(self.weight) + "\n"
+        if self.value > 0:
+            text += "**Value**: " + str(self.value/100) + "gp\n"
+        if "uses" in self.attrlist:
+            text += "**Uses Left**: " + str(self.uses) + "\n"
+        if "entries" in self.attrlist:
+            text += "**Description**: " + self.entries + "\n"
+        if "notes" in self.attrlist:
+            text += "**Notes**: " + self.notes + "\n"
+        return text
 
 class Backpack:
     def __init__(self, name, strength, hidden):
@@ -157,9 +199,10 @@ class Backpack:
             for a in attributes:
                 try:
                     key, value = a.split(":")
-                    setattr(result, key, value)
+                    result.editAttr(key, value)
                 except Exception as e:
                     print(e)
+            result.weight = float(result.weight)
             self.weigh()
             return result.itemText()
         else:
@@ -168,9 +211,9 @@ class Backpack:
     def use(self, itemName):
         found, result = itemFinder(self.itemlist, itemName)
         if found:
-            if "uses" in result.keys():
-                setattr(result, "uses", getattr(result, "uses")-1)
-                return getattr(result, "uses") + " uses left"
+            if "uses" in result.attrlist:
+                setattr(result, "uses", int(getattr(result, "uses"))-1)
+                return str(getattr(result, "uses")) + " uses left"
             else:
                 return "No uses on item"
         else:
@@ -182,7 +225,7 @@ class Backpack:
         self.weight += self.foodcount * 2.0
         for item in self.itemlist:
             self.weight += item.weight
-        return str(self.weight) + " pounds of weight. (Encumberance Capacity: " + str(self.strength*10) + " pounds)"
+        return str(self.weight) + " pounds of weight. (Encumberance Capacity: " + str(self.strength*5) + " pounds)"
 
     def food(self, command):
         action = command.split()
@@ -214,7 +257,7 @@ class Backpack:
         self.weigh()
         found, result = itemFinder(self.itemlist, itemName)
         if found:
-            return result.itemText()
+            return result.fullText()
         else:
             return result
 
@@ -384,7 +427,7 @@ def backpackParser(items, backpacks, command):
                     return bp.find(" ".join(command[2:]), items)
                 elif command[1] == "sell":
                     return bp.sell(" ".join(command[2:]))
-                elif command[1] == ["remove", "ditch"]:
+                elif command[1] in ["remove", "ditch", "delete"]:
                     return bp.ditch(" ".join(command[2:]))
                 elif command[1] == "money":
                     return bp.money(" ".join(command[2:]))
@@ -397,7 +440,7 @@ def backpackParser(items, backpacks, command):
                 elif command[1] == "use":
                     return bp.use(" ".join(command[2:]))
                 elif command[1] == "edit":
-                    return bp.edit(command[2], " ".join(command[2:]))
+                    return bp.edit(command[2], " ".join(command[3:]))
                 elif command[1] == "thin":
                     return bp.shiftUp()
                 elif command[1] == "food":
@@ -406,7 +449,11 @@ def backpackParser(items, backpacks, command):
                     bp.strength = int(command[2])
                     return "Changed strength of " + bp.name + " to " + command[2]
                 else:
-                    return "Invalid backpack command"
+                    found, result = itemFinder(bp.itemlist, " ".join(command[1:]))
+                    if found:
+                        return result.itemText()
+                    else:
+                        return result
             else:
                 return "Backpack not found"
     except Exception as e:
