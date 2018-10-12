@@ -274,7 +274,7 @@ class Backpack:
             return "Added " + str(count) + " food"
 
     def list(self):
-        return str(self.pp) + "pp " + str(self.gp) + "gp " + str(self.ep) + "ep " + str(self.sp) + "sp " + str(self.cp) + "cp " + str(self.foodcount) + " food\n" + ", ".join([item.name + (" x" + str(item.quantity) if "quantity" in item.attrlist else "") for item in self.itemlist]) + "\nWeight: " + str(self.weight) + " (Encumberance Capacity: " + str(self.strength*5) + " pounds)"
+        return str(self.pp) + "pp " + str(self.gp) + "gp " + str(self.ep) + "ep " + str(self.sp) + "sp " + str(self.cp) + "cp " + str(self.foodcount) + " food\n" + ", ".join([item.name + (" x" + str(item.quantity) if "quantity" in item.attrlist else "") for item in self.itemlist]) + "\nWeight: " + str(self.weight) + " (Encumberance Capacity: " + str(self.strength*10) + " pounds)"
 
     def info(self, itemName):
         self.weigh()
