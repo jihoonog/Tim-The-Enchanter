@@ -129,6 +129,7 @@ class Backpack:
                 else:
                     self.itemlist.append(copy.deepcopy(result))
                 self.weight += result.weight
+                self.itemlist.sort(key=lambda x:x.name)
                 return "Purchased " + result.name
             else:
                 return "Insufficient Funds"
@@ -147,6 +148,7 @@ class Backpack:
             else:
                 self.itemlist.append(copy.deepcopy(result))
             self.weight += result.weight
+            self.itemlist.sort(key=lambda x:x.name)
             return "Added " + result.name
         else:
             return result
