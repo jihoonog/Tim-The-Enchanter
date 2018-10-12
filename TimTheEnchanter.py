@@ -46,6 +46,8 @@ class Item:
     def fullText(self):
         text = ""
         text += "**Name**: " + self.name + "\n"
+        if "quantity" in self.attrlist:
+            text += "**Quantity**: " + str(self.quantity) + "\n"
         if self.weight > 0:
             text += "**Weight**: " + str(self.weight) + "\n"
         if self.value > 0:
@@ -57,7 +59,7 @@ class Item:
         if "notes" in self.attrlist:
             text += "**Notes**: " + self.notes + "\n"
         for x in self.attrlist:
-            if x in ["name", "weight", "value", "entries", "uses", "notes"]:
+            if x in ["name", "weight", "value", "entries", "uses", "notes", "quantity"]:
                 continue
             else:
                 text += "**" + x + "**: " + str(getattr(self, x)) + "\n"
@@ -66,6 +68,8 @@ class Item:
     def itemText(self):
         text = ""
         text += "**Name**: " + self.name + "\n"
+        if "quantity" in self.attrlist:
+            text += "**Quantity**: " + str(self.quantity) + "\n"
         if self.weight > 0:
             text += "**Weight**: " + str(self.weight) + "\n"
         if self.value > 0:
@@ -116,7 +120,14 @@ class Backpack:
             if (self.cp + (self.sp*10) + (self.gp*100) + (self.pp*1000)) >= result.value:
                 self.cp -= result.value
                 self.shiftDown()
-                self.itemlist.append(copy.deepcopy(result))
+                found2, result2 = itemFinder(self.itemlist, result.name)
+                if found2:
+                    if "quantity" in result2.attrlist:
+                        result2.quantity = int(result2.quantity) + 1
+                    else:
+                        result2.editAttr("quantity", 2)
+                else:
+                    self.itemlist.append(copy.deepcopy(result))
                 self.weight += result.weight
                 return "Purchased " + result.name
             else:
@@ -127,7 +138,14 @@ class Backpack:
     def find(self, itemName, items):
         found, result = itemFinder(items, itemName)
         if found:
-            self.itemlist.append(copy.deepcopy(result))
+            found2, result2 = itemFinder(self.itemlist, result.name)
+            if found2:
+                if "quantity" in result2.attrlist:
+                    result2.quantity = int(result2.quantity) + 1
+                else:
+                    result2.editAttr("quantity", 2)
+            else:
+                self.itemlist.append(copy.deepcopy(result))
             self.weight += result.weight
             return "Added " + result.name
         else:
@@ -136,12 +154,14 @@ class Backpack:
     def sell(self, itemName):
         found, result = itemFinder(self.itemlist, itemName)
         if found:
-            self.itemlist.remove(result)
-            self.weight -= result.weight
+            if "quantity" in result.attrlist and result.quantity > 1:
+                result.quantity = int(result.quantity) - 1
+            else:
+                self.itemlist.remove(result)
             value = result.value
             if result.type not in ["$", "TG"]:
                 value == value // 2
-            text = "Sold " + result.name + " for " + value
+            text = "Sold " + result.name + " for " + str(float(value)/100) + "gp"
             while value >= 1000:
                 value -= 1000
                 self.pp += 1
@@ -160,7 +180,10 @@ class Backpack:
     def ditch(self, itemName):
         found, result = itemFinder(self.itemlist, itemName)
         if found:
-            self.itemlist.remove(result)
+            if "quantity" in result.attrlist and int(result.quantity) > 1:
+                result.quantity = int(result.quantity) - 1
+            else:
+                self.itemlist.remove(result)
             self.weight -= result.weight
             return "Removed " + result.name
         else:
@@ -224,7 +247,7 @@ class Backpack:
         self.weight += (self.pp+self.gp+self.ep+self.sp+self.cp)*0.02
         self.weight += self.foodcount * 2.0
         for item in self.itemlist:
-            self.weight += item.weight
+            self.weight += item.weight * (int(item.quantity) if "quantity" in item.attrlist else 1)
         return str(self.weight) + " pounds of weight. (Encumberance Capacity: " + str(self.strength*5) + " pounds)"
 
     def food(self, command):
@@ -251,7 +274,7 @@ class Backpack:
             return "Added " + str(count) + " food"
 
     def list(self):
-        return str(self.pp) + "pp " + str(self.gp) + "gp " + str(self.ep) + "ep " + str(self.sp) + "sp " + str(self.cp) + "cp " + str(self.foodcount) + " food\n" + ", ".join([item.name for item in self.itemlist]) + "\nWeight: " + str(self.weight) + " (Encumberance Capacity: " + str(self.strength*5) + " pounds)"
+        return str(self.pp) + "pp " + str(self.gp) + "gp " + str(self.ep) + "ep " + str(self.sp) + "sp " + str(self.cp) + "cp " + str(self.foodcount) + " food\n" + ", ".join([item.name + (" x" + str(item.quantity) if "quantity" in item.attrlist else "") for item in self.itemlist]) + "\nWeight: " + str(self.weight) + " (Encumberance Capacity: " + str(self.strength*5) + " pounds)"
 
     def info(self, itemName):
         self.weigh()
@@ -422,13 +445,37 @@ def backpackParser(items, backpacks, command):
                 if command[1] == "list":
                     return bp.list()
                 elif command[1] == "buy":
-                    return bp.buy(" ".join(command[2:]), items)
+                    if command[2].isnumeric():
+                        text = ""
+                        for x in range(int(command[2])):
+                            text = bp.buy(" ".join(command[3:]), items)
+                        return text
+                    else:
+                        return bp.buy(" ".join(command[2:]), items)
                 elif command[1] in ["add", "find"]:
-                    return bp.find(" ".join(command[2:]), items)
+                    if command[2].isnumeric():
+                        text = ""
+                        for x in range(int(command[2])):
+                            text = bp.find(" ".join(command[3:]), items)
+                        return text
+                    else:
+                        return bp.find(" ".join(command[2:]), items)
                 elif command[1] == "sell":
-                    return bp.sell(" ".join(command[2:]))
+                    if command[2].isnumeric():
+                        text = ""
+                        for x in range(int(command[2])):
+                            text = bp.find(" ".join(command[3:]), items)
+                        return text
+                    else:
+                        return bp.sell(" ".join(command[2:]))
                 elif command[1] in ["remove", "ditch", "delete"]:
-                    return bp.ditch(" ".join(command[2:]))
+                    if command[2].isnumeric():
+                        text = ""
+                        for x in range(int(command[2])):
+                            text = bp.ditch(" ".join(command[3:]))
+                        return text
+                    else:
+                        return bp.ditch(" ".join(command[2:]))
                 elif command[1] == "money":
                     return bp.money(" ".join(command[2:]))
                 elif command[1] == "move":
