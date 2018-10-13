@@ -13949,6 +13949,105 @@
             "name": "Walter's Spellbook",
             "weight": "4",
             "description": "Walter's signature spellbook. It's made of stone because he's an idiot (and a pyromaniac.)"
+        },
+        {
+            "name": "Total Biscuit of Rejuvenation",
+            "weight": "0.05",
+            "value": " 90gp",
+            "description": " A character who eats this biscuit regains 2d4+2 hit points and it also provides enough nourishment to sustain a creature for 2 days.",
+            "source": "Simon"
+        },
+        {
+            "name": " Empty wine bottle",
+            "value": "0",
+            "weight": ".5",
+            "description": " An empty wine bottle bearing a pretty label that says \"The Wizards of Wine Winery, Red Dragon Crush, 331422-W\"",
+            "source": "PHB"
+        },
+        {
+            "name": " Candle",
+            "value": "25",
+            "weight": "0",
+            "description": " A candle with a wick that doesn't burn out",
+            "source": "TftYP"
+        },
+        {
+            "name": " Everburning Candle",
+            "value": "25",
+            "weight": "0",
+            "description": " A candle with a wick that doesn't burn out",
+            "source": "TftYP"
+        },
+        {
+            "name": " Night Caller",
+            "value": "",
+            "weight": "0",
+            "description": " A whistle that has Night Caller etched in dwarvish runes on the side",
+            "source": "TftYP"
+        },
+        {
+            "name": " Night Caller (Identified)",
+            "value": "",
+            "weight": "0",
+            "tier": "Wondrous",
+            "rarity": "Uncommon",
+            "description": " A whistle that has Night Caller etched in dwarvish runes on the side. If you blow the whistle in darkness or under the night sky it allows you to cast the Animate Dead spell. The target can be affected through 10 feet of soft earth or similar material, and if it is, it takes 1 minute to claw it's way to the surface and serve you. Once the whistle has animated an undead creature it cannot do so again until 7 days have passed.\nOnce every 24 hours you can blow the whistle to re-assert control over one or two creatures you animated with it.",
+            "source": "TftYP"
+        },
+        {
+            "name": " Peridot jewel carved in the likeness of a dragon",
+            "value": "10",
+            "type": "$",
+            "weight": "0",
+            "source": "TftYP"
+        },
+        {
+            "name": "Groovy Orb",
+            "notes": "Who knows what this does"
+        },
+        {
+            "name": "Vial of Fruity Tumor",
+            "notes": "Who knows what this does"
+        },
+        {
+            "name": "Find Familiar Supplies",
+            "description": "The materials required for the Find Familiar spell",
+            "value": "1000"
+        },
+        {
+            "name": "Raw Alchemist Materials",
+            "value": "100",
+            "weight": "0.02",
+            "description": "One gold piece worth of alchemist materials"
+        },
+        {
+            "name": "Gulthias Tree Apple (Quarter)",
+            "description": "A quarter of an apple grown from the Gulthias tree. When consumed the eater gains 70 hit points and blindness, deafness and all diseases affecting the eater end."
+        },
+        {
+            "name": "Stone of Golorr"
+        },
+        {
+            "name": " Stone of Golorr 2",
+            "value": "",
+            "weight": ".5",
+            "tier": "Wondrous",
+            "rarity": "Artifact",
+            "description": " The Stone of Golorr is a glossy, greenish-gray stone that fits in the palm of your hand."
+        },
+        {
+            "name": "Rapier",
+            "value": "25gp",
+            "weight": "2",
+            "description": "Finesse (You can use either STR or DEX for attack and damage rolls)",
+            "notes": "Attack = 1d8 +(STR or DEX) Piercing"
+        },
+        {
+            "name": "Shortbow",
+            "value": "25gp",
+            "weight": "2",
+            "description": "Ammunition (range 80/320), two-handed",
+            "notes": "Attack = 1d6 piercing"
         }
     ]
 }
