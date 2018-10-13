@@ -869,7 +869,7 @@ def runServer():
 
     backpacks = dict()
     for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
-        spellbooks[file[:-7]] = pickle.load(open("backpacks/" + file, 'rb'))
+        backpacks[file[:-7]] = pickle.load(open("backpacks/" + file, 'rb'))
     print("Loaded", len(backpacks.keys()), "backpacks")
 
     token = open("token.txt").readline().strip()
