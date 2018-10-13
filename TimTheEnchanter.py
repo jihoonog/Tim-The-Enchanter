@@ -80,8 +80,12 @@ class Item:
             text += "**Value**: " + str(self.value/100) + "gp\n"
         if "uses" in self.attrlist:
             text += "**Uses Left**: " + str(self.uses) + "\n"
-        if "entries" in self.attrlist:
-            text += "**Description**: " + self.entries + "\n"
+        if "entries" in self.attrlist or "description" in self.attrlist:
+            text += "**Description**: "
+            if "entries" in self.attrlist:
+                text += self.entries + "\n"
+            if "description" in self.attrlist:
+                text += self.description + "\n"
         if "notes" in self.attrlist:
             text += "**Notes**: " + self.notes + "\n"
         return text
@@ -405,7 +409,7 @@ def backpackParser(items, backpacks, command):
             if len(command) > 1:
                 bpfound, bpresult = backpackFinder(backpacks, command[1])
                 if bpfound:
-                    backpacks[bpresult].list()
+                    return backpacks[bpresult].list()
                 else:
                     return bpresult
             text = ", ".join([bp for bp in backpacks.keys() if backpacks[bp].hidden == False])
@@ -1000,7 +1004,7 @@ def runServer():
             else:
                 found, result = itemFinder(items, message.content[4:])
                 if found:
-                    toSend = result.itemText()
+                    toSend = result.fullText()
                 else:
                     toSend = result
 
