@@ -54,12 +54,16 @@ class Item:
             text += "**Value**: " + str(self.value/100) + "gp\n"
         if "uses" in self.attrlist:
             text += "**Uses Left**: " + str(self.uses) + "\n"
-        if "entries" in self.attrlist:
-            text += "**Description**: " + self.entries + "\n"
+        if "entries" in self.attrlist or "description" in self.attrlist:
+            text += "**Description**: "
+            if "entries" in self.attrlist:
+                text += self.entries + "\n"
+            if "description" in self.attrlist:
+                text += self.description + "\n"
         if "notes" in self.attrlist:
             text += "**Notes**: " + self.notes + "\n"
         for x in self.attrlist:
-            if x in ["name", "weight", "value", "entries", "uses", "notes", "quantity"]:
+            if x in ["name", "weight", "value", "entries", "uses", "notes", "quantity", "description"]:
                 continue
             else:
                 text += "**" + x + "**: " + str(getattr(self, x)) + "\n"
@@ -360,6 +364,8 @@ def itemFinder(items, itemName):
         if item.id == itemName.lower().replace("'", "").replace(" ", ""):
             return True, item
         elif itemName.lower().replace("'", "").replace(" ", "") in item.id:
+            if "hidden" in item.attrlist and item.hidden == "True":
+                continue
             if not savedItem:
                 savedItem = item
             else:
