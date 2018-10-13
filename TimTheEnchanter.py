@@ -393,7 +393,7 @@ def money(self, change):
     values = change.split()
     for v in values:
         try:
-            sign = 1 if v[:1] == "-" else -1
+            sign = -1 if v[:1] == "-" else 1
             v = v[1:]
             coin = v[-2:]
             v = v[:-2]
