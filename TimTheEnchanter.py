@@ -465,7 +465,9 @@ def backpackParser(items, backpacks, command):
             bpfound, bpresult = backpackFinder(backpacks, command[0])
             if bpfound:
                 bp = backpacks[bpresult]
-                if command[1] == "list":
+                if len(command) == 1:
+                    return bp.list()
+                elif command[1] == "list":
                     return bp.list()
                 elif command[1] == "buy":
                     if command[2].isnumeric():
