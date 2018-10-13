@@ -161,6 +161,12 @@ class Backpack:
         else:
             return result
 
+    def bulkfind(self, itemNames, items):
+        text = ""
+        for item in itemNames:
+            text += self.find(item, items) + "\n"
+        return text
+
     def sell(self, itemName):
         found, result = itemFinder(self.itemlist, itemName)
         if found:
@@ -247,8 +253,11 @@ class Backpack:
             if "uses" in result.attrlist:
                 setattr(result, "uses", int(getattr(result, "uses"))-1)
                 return str(getattr(result, "uses")) + " uses left"
+            elif "quantity" in result.attrlist and int(result.quantity) > 1:
+                result.quantity = int(result.quantity)-1
+                return str(result.quantity) + " left"
             else:
-                return "No uses on item"
+                return self.ditch(result.name)
         else:
             return result
 
@@ -472,6 +481,8 @@ def backpackParser(items, backpacks, command):
                         for x in range(int(command[2])):
                             text = bp.find(" ".join(command[3:]), items)
                         return text
+                    elif command[2] == "bulk":
+                        return bp.bulkfind(command[3:], items)
                     else:
                         return bp.find(" ".join(command[2:]), items)
                 elif command[1] == "sell":
