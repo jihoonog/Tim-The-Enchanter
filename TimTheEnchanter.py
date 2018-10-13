@@ -405,7 +405,7 @@ def backpackFinder(backpacks, backpackName):
 
 def backpackParser(items, backpacks, command):
     originalcommand = command.copy()
-    command = command.lower()
+    command = [item.lower() for item in command]
     try:
         if command[0] == "list":
             if len(command) > 1:
