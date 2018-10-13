@@ -404,6 +404,8 @@ def backpackFinder(backpacks, backpackName):
         return False, "? ".join(sorted(text)) + "?"
 
 def backpackParser(items, backpacks, command):
+    originalcommand = command.copy()
+    command = command.lower()
     try:
         if command[0] == "list":
             if len(command) > 1:
@@ -499,7 +501,7 @@ def backpackParser(items, backpacks, command):
                 elif command[1] == "use":
                     return bp.use(" ".join(command[2:]))
                 elif command[1] == "edit":
-                    return bp.edit(command[2], " ".join(command[3:]))
+                    return bp.edit(originalcommand[2], " ".join(originalcommand[3:]))
                 elif command[1] == "thin":
                     return bp.shiftUp()
                 elif command[1] == "food":
@@ -917,7 +919,7 @@ def runServer():
             toSend = spellbookParser(spells, spellbooks, message.content[2:].lower().split())
 
         elif message.content[:2].lower() == "bp":
-            toSend = backpackParser(items, backpacks, message.content[2:].lower().split())
+            toSend = backpackParser(items, backpacks, message.content[2:].split())
 
         elif message.content.lower().replace(" ", "") == "whoareyou?":
             toSend = "There are some who call me... ***Tim***"
