@@ -2,7 +2,6 @@ import copy, discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
-
 class Item:
     def __init__(self, item):
         self.fullString = str(item)
@@ -22,7 +21,6 @@ class Item:
             self.value = int(num) * moneyvalue[value]
         except:
             self.value = 0
-
         try:
             self.weight = float(item["weight"])
         except:
@@ -209,7 +207,7 @@ class Backpack:
         values = change.split()
         for v in values:
             try:
-                sign = 1 if v[:1] else -1
+                sign = 1 if v[:1] == "-" else -1
                 v = v[1:]
                 coin = v[-2:]
                 v = v[:-2]
@@ -390,6 +388,21 @@ def itemFinder(items, itemName):
     else:
         text.append(savedItem.name)
         return False, "? ".join(sorted(text)) + "?"
+
+def money(self, change):
+    values = change.split()
+    for v in values:
+        try:
+            sign = 1 if v[:1] == "-" else -1
+            v = v[1:]
+            coin = v[-2:]
+            v = v[:-2]
+            amount = int(v) * sign
+            setattr(self, coin, getattr(self, coin) + amount)
+        except:
+            pass
+    self.weigh()
+    return "Changed money"
 
 def backpackFinder(backpacks, backpackName):
     savedBackpack = None
@@ -890,6 +903,9 @@ def runServer():
     for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
         backpacks[file[:-7]] = pickle.load(open("backpacks/" + file, 'rb'))
     print("Loaded", len(backpacks.keys()), "backpacks")
+
+    for backpack in backpacks.keys():
+        backpacks[backpack].money = money
 
     token = open("token.txt").readline().strip()
     print("Loaded token", token)
