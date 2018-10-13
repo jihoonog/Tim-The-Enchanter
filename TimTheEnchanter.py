@@ -517,7 +517,7 @@ def backpackParser(items, backpacks, command):
                     else:
                         return bp.ditch(" ".join(command[2:]))
                 elif command[1] == "money":
-                    return bp.money(" ".join(command[2:]))
+                    return money(bp, " ".join(command[2:]))
                 elif command[1] == "move":
                     return bp.move(command[2], backpacks[command[3]])
                 elif command[1] == "weigh":
@@ -903,9 +903,6 @@ def runServer():
     for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
         backpacks[file[:-7]] = pickle.load(open("backpacks/" + file, 'rb'))
     print("Loaded", len(backpacks.keys()), "backpacks")
-
-    for backpack in backpacks.keys():
-        backpacks[backpack].money = money
 
     token = open("token.txt").readline().strip()
     print("Loaded token", token)
