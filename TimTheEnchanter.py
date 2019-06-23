@@ -4,6 +4,8 @@ schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantme
 moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
 spellsources = ["spells.json", "dv.json"]
 itemsources = ["items.json"]
+criticaltexts = ["*Tubular!*", "*Nailed it!*", "*We did it lads!*", "*We did it Reddit*", "critxyz"]
+failtexts = ["*That's a real ouchy bro*", "*That's a real kick in the knackers bro*", "*The Dark Elf laughs at your misfortune*", "*Big oof.*", "*No says the man in red*", "*That was a CRIT (ical fail)*", "You crit shit the bed", "failxyz"]
 
 class Item:
     def __init__(self, item):
@@ -594,7 +596,7 @@ def parseDice(rolls, multiplier):
         simpleroll = True
         extras = ""
         sum = 0
-        results = list()
+        results = []
         rolls = rolls.replace(" ", "").replace("-", "+-").split("+")
         for roll in rolls:
             if "d" in roll:
@@ -610,22 +612,22 @@ def parseDice(rolls, multiplier):
                     num = random.randrange(die) + 1
                     subresults.append(num)
                     sum += sign * num
-                    if num == 1:
-                        extras = "Critical Fail Text"
                     if num == 20:
-                        extras = "Critical Hit Text"
+                        extras = random.choice(criticaltexts)
+                    if num == 1:
+                        extras = random.choice(failtexts)
                 results.append(subresults)
             elif roll == "":
                 pass
             else:
                 sum += int(roll)
                 results.append(roll)
-        finalresults = list()
-        for result in results:
-            finalresults.append(str(result))
-        if simpleroll:
+        finalresults = []
+        for index in range(len(results)):
+            finalresults.append(((str(rolls[index]) + ": ") if "d" in rolls[index] else "") + str(results[index]))
+        if simpleroll and extras != "":
             finalresults.append(extras)
-        return ("" if multiplier == 1 else "**Crit** ") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
+        return ("**Crit** " if multiplier == 2 else "") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
     except Exception as e:
         print(e)
         return "Dice roll command exception"
@@ -902,7 +904,7 @@ def runServer():
     spells = []
     for source in spellsources:
         with open(source) as f:
-            spells.append([Spell(spell) for spell in json.load(f) if spell["source"] in ["PHB", "XGE", "AI"]])
+            spells.extend([Spell(spell) for spell in json.load(f) if spell["source"] in ["PHB", "XGE", "AI"]])
     print("Loaded", len(spells), "spells")
 
     spellbooks = dict()
@@ -915,7 +917,7 @@ def runServer():
     for source in itemsources:
         with open(source) as f:
             itemsjson = json.load(f)
-        items.append([Item(item) for item in itemsjson["item"]])
+        items.extend([Item(item) for item in itemsjson["item"]])
     print("Loaded", len(items), "items")
 
     backpacks = dict()
@@ -950,11 +952,17 @@ def runServer():
         print("Got Command:", message.content)
         toSend = ""
 
-        if message.content[:4].lower() == "roll" or message.content[:2].lower() == "r ":
+        if message.content[:4].lower() == "roll":
             toSend = parseDice(message.content[4:], 1)
 
-        elif message.content[:5].lower() == "croll" or message.content[:3].lower() == "cr ":
+        elif message.content[:2].lower() == "r ":
+            toSend = parseDice(message.content[2:], 1)
+
+        elif message.content[:5].lower() == "croll":
             toSend = parseDice(message.content[5:], 2)
+
+        elif message.content[:3].lower() == "cr ":
+            toSend = parseDice(message.content[2:], 2)
 
         elif message.content[:6].lower() == "random":
             for x in range(int(message.content[6:]) if message.content[6:] else 1):
@@ -1077,7 +1085,14 @@ def runServer():
             await message.channel.send("Can't find spell, spellbook or command")
             return
         elif len(toSend) < 2000:
-            await message.channel.send(toSend)
+            if toSend[-7:] == "failxyz":
+                await message.channel.send(toSend[:-7])
+                await message.channel.send(file=discord.File("fail.png"))
+            elif toSend[-7:] == "critxyz":
+                await message.channel.send(toSend[:-7])
+                await message.channel.send(file=discord.File("crit.gif"))
+            else:
+                await message.channel.send(toSend)
         else:
             msgs = list()
             while (len(toSend) >= 2000):
