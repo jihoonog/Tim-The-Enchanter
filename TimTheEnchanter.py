@@ -1,11 +1,11 @@
-import copy, discord, json, os, pickle, random, re
+import copy, discord, json, os, pickle, random, re, texttable, time
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
 spellsources = ["spells.json", "dv.json"]
 itemsources = ["items.json"]
-criticaltexts = ["*Tubular!*", "*Nailed it!*", "*We did it lads!*", "*We did it Reddit*", "critxyz"]
-failtexts = ["*That's a real ouchy bro*", "*That's a real kick in the knackers bro*", "*The Dark Elf laughs at your misfortune*", "*Big oof.*", "*No says the man in red*", "*That was a CRIT (ical fail)*", "You crit shit the bed", "failxyz"]
+criticaltexts = ["*Tubular!*", "*Nailed it!*", "*We did it lads!*", "*We did it Reddit*", "critxyz", "*UwU*", "*Hell yeah brother*", "*God Bless America*"]
+failtexts = ["*That's a real ouchy bro*", "*That's a real kick in the knackers bro*", "*The Dark Elf laughs at your misfortune*", "*Big oof.*", "*No says the man in red*", "*That was a CRIT (ical fail)*", "You crit shit the bed", "failxyz", "*UwU*", "*Welcome to Trump's America*", "*You hate to see it happen*"]
 
 class Item:
     def __init__(self, item):
@@ -591,7 +591,7 @@ def spellbookFinder(spellbooks, spellbookName):
         text.append(savedSpellbook)
         return False, "? ".join(sorted(text)) + "?"
 
-def parseDice(rolls, multiplier):
+def parseDice(rolls, multiplier, user, diceStats, diceStatsDaily):
     try:
         simpleroll = True
         extras = ""
@@ -624,10 +624,34 @@ def parseDice(rolls, multiplier):
                 subresults = list()
                 for i in range((multiplier if sign == 1 else 1) * count):
                     num = random.randrange(die) + 1
+                    if die == 20:
+                        if user not in diceStats:
+                            diceStats[user] = [0]*5
+                        if user not in diceStatsDaily:
+                            diceStatsDaily[user] = [0]*5
+
+                        diceStats[user][3] += num
+                        diceStats[user][4] += 1
+                        diceStats[user][0] = diceStats[user][3] / diceStats[user][4]
+                        if num == 20:
+                            diceStats[user][1] += 1
+                        elif num == 1:
+                            diceStats[user][2] += 1
+
+                        diceStatsDaily[user][3] += num
+                        diceStatsDaily[user][4] += 1
+                        diceStatsDaily[user][0] = diceStatsDaily[user][3] / diceStatsDaily[user][4]
+                        if num == 20:
+                            diceStatsDaily[user][1] += 1
+                        elif num == 1:
+                            diceStatsDaily[user][2] += 1
+
                     subresults.append(num)
                     sum += sign * num
 
                 subresults.sort(reverse=True)
+
+                subtotal = 0
 
                 for index in range(len(subresults)):
                     if index < dropHigh:
@@ -642,7 +666,9 @@ def parseDice(rolls, multiplier):
                                 extras = random.choice(criticaltexts)
                             if subresults[index] == 1:
                                 extras = random.choice(failtexts)
+                        subtotal += subresults[index]
                         subresults[index] = "**" + str(subresults[index]) + "**"
+                subresults.append("(" + str(subtotal) + ")")
                 results.append(subresults)
             elif roll == "":
                 pass
@@ -927,6 +953,15 @@ def spellSearch(spells, filterList):
         print(e)
         return ["Filter command exception"]
 
+def evaluateStats(diceStats):
+    table = texttable.Texttable()
+    table.add_row(["Person", "Average", "20s", "1s", "Total", "Rolls"])
+    for user in diceStats.keys():
+        row = [user]
+        row.extend(diceStats[user])
+        table.add_row(row)
+    return "`" + table.draw() + "`"
+
 def runServer():
     spells = []
     for source in spellsources:
@@ -938,6 +973,14 @@ def runServer():
     for file in [file for file in os.listdir("spellbooks/") if os.path.isfile("spellbooks/" + file) and file[-7:] == ".pickle"]:
         spellbooks[file[:-7]] = pickle.load(open("spellbooks/" + file, 'rb'))
     print("Loaded", len(spellbooks.keys()), "spellbooks")
+
+    diceStats = dict()
+    try:
+        with open("stats.pickle", "rb") as f:
+            diceStats = pickle.load(f)
+    except:
+        diceStats = dict()
+    diceStatsDaily = dict()
 
     itemsjson = None
     items = []
@@ -958,11 +1001,25 @@ def runServer():
     client = discord.Client()
     print("Loaded client")
 
+    startuptime = time.time()
+
     @client.event
     async def on_message(message):
-
         if message.author == client.user:
             return
+        if time.time() - startuptime > 86400:
+            await message.channel.send("Please wait for me to reboot, then query me again.")
+            for spellbook in spellbooks.keys():
+                pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
+            for backpack in backpacks.keys():
+                pickle.dump(backpacks[backpack], open("backpacks/" + backpack + '.pickle', 'wb'))
+            with open("items.json", "w") as f:
+                json.dump(itemsjson, f, indent=4)
+            with open("stats.pickle", "wb") as f:
+                pickle.dump(diceStats, f)
+            client.logout()
+            client.close()
+            quit()
 
         elif message.content.startswith('#'):
             return
@@ -980,16 +1037,16 @@ def runServer():
         toSend = ""
 
         if message.content[:4].lower() == "roll":
-            toSend = parseDice(message.content[4:], 1)
+            toSend = parseDice(message.content[4:], 1, str(message.author.nick), diceStats, diceStatsDaily)
 
         elif message.content[:2].lower() == "r ":
-            toSend = parseDice(message.content[2:], 1)
+            toSend = parseDice(message.content[2:], 1, str(message.author.nick), diceStats, diceStatsDaily)
 
         elif message.content[:5].lower() == "croll":
-            toSend = parseDice(message.content[5:], 2)
+            toSend = parseDice(message.content[5:], 2, str(message.author.nick), diceStats, diceStatsDaily)
 
         elif message.content[:3].lower() == "cr ":
-            toSend = parseDice(message.content[2:], 2)
+            toSend = parseDice(message.content[2:], 2, str(message.author.nick), diceStats, diceStatsDaily)
 
         elif message.content[:6].lower() == "random":
             for x in range(int(message.content[6:]) if message.content[6:] else 1):
@@ -1000,6 +1057,12 @@ def runServer():
 
         elif message.content[:2].lower() == "bp":
             toSend = backpackParser(items, backpacks, message.content[2:].split())
+
+        elif message.content[:5].lower() == "stats":
+            toSend = evaluateStats(diceStats)
+
+        elif message.content[:5].lower() == "daily":
+            toSend = evaluateStats(diceStatsDaily)
 
         elif message.content.lower().replace(" ", "") == "whoareyou?":
             toSend = "There are some who call me... ***Tim***"
@@ -1013,6 +1076,8 @@ def runServer():
                     pickle.dump(backpacks[backpack], open("backpacks/" + backpack + '.pickle', 'wb'))
                 with open("items.json", "w") as f:
                     json.dump(itemsjson, f, indent=4)
+                with open("stats.pickle", "wb") as f:
+                    pickle.dump(diceStats, f)
                 client.logout()
                 client.close()
                 quit()
