@@ -2,8 +2,8 @@ import copy, discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
-spellsources = {"spells.json"}
-itemsources = {"items.json"}
+spellsources = ["spells.json", "dv.json"]
+itemsources = ["items.json"]
 
 class Item:
     def __init__(self, item):
