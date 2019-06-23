@@ -931,10 +931,10 @@ def runServer():
         print("Got Command:", message.content)
         toSend = ""
 
-        if message.content[:4].lower() == "roll" or message.content[:2].lower() == "r ":
+        if message.content[:4].lower() == "roll":
             toSend = parseDice(message.content[4:], 1)
 
-        elif message.content[:5].lower() == "croll" or message.content[:3].lower() == "cr ":
+        elif message.content[:5].lower() == "croll":
             toSend = parseDice(message.content[5:], 2)
 
         elif message.content[:6].lower() == "random":
