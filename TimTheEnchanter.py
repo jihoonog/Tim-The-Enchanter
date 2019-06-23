@@ -2,6 +2,9 @@ import copy, discord, json, os, pickle, random, re
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
+spellsources = {"spells.json"}
+itemsources = {"items.json"}
+
 class Item:
     def __init__(self, item):
         self.fullString = str(item)
@@ -314,6 +317,7 @@ class Spell:
         self.v = "V " if "v" in spell["components"].keys() else ""
         self.s = "S " if "s" in spell["components"].keys() else ""
         self.m = "M (" + spell["components"]["m"] + ")" if "m" in spell["components"].keys() else ""
+        self.r = "R (" + spell["components"]["r"] + ")" if "r" in spell["components"].keys() else ""
         self.durationtype = spell["duration"][0]["type"]
         self.duration = self.durationtype if self.durationtype in ["instant", "permanent", "special"] else str(spell["duration"][0]["duration"]["amount"]) + " " + spell["duration"][0]["duration"]["type"]
         self.concentration = " (Concentration)" if "concentration" in spell["duration"][0].keys() else ""
@@ -329,7 +333,7 @@ class Spell:
         "**Type:** Level " + self.level + " " + schools[self.school] + self.ritual + "\n" + \
         "**Casting Time:** " + self.time + "\n" + \
         "**Range:** " + self.rangecount + self.rangetype + "\n" + \
-        "**Components:** " + self.v + self.s + self.m + "\n" + \
+        "**Components:** " + self.v + self.s + self.m + self.r + "\n" + \
         "**Duration:** " + self.duration + self.concentration + "\n" + \
         "**Description:** " + self.entries + self.entriesHL + \
         "**Classes:** " + ", ".join([c for c in ([cclass["name"] for cclass in self.classes if cclass["source"] in ["PHB", "XGE"]] + \
@@ -587,6 +591,8 @@ def spellbookFinder(spellbooks, spellbookName):
 
 def parseDice(rolls, multiplier):
     try:
+        simpleroll = True
+        extras = ""
         sum = 0
         results = list()
         rolls = rolls.replace(" ", "").replace("-", "+-").split("+")
@@ -597,11 +603,17 @@ def parseDice(rolls, multiplier):
                     roll = roll[1:]
                     sign = -1
                 count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
+                if count != 1 or die != 20:
+                    simpleroll = False
                 subresults = list()
                 for i in range((multiplier if sign == 1 else 1) * count):
                     num = random.randrange(die) + 1
                     subresults.append(num)
                     sum += sign * num
+                    if num == 1:
+                        extras = "Critical Fail Text"
+                    if num == 20:
+                        extras = "Critical Hit Text"
                 results.append(subresults)
             elif roll == "":
                 pass
@@ -611,6 +623,8 @@ def parseDice(rolls, multiplier):
         finalresults = list()
         for result in results:
             finalresults.append(str(result))
+        if simpleroll:
+            finalresults.append(extras)
         return ("" if multiplier == 1 else "**Crit** ") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
     except Exception as e:
         print(e)
@@ -885,7 +899,10 @@ def spellSearch(spells, filterList):
         return ["Filter command exception"]
 
 def runServer():
-    spells = [Spell(spell) for spell in json.load(open("spells.json")) if spell["source"] in ["PHB", "XGE"]]
+    spells = []
+    for source in spellsources:
+        with open(source) as f:
+            spells.append([Spell(spell) for spell in json.load(f) if spell["source"] in ["PHB", "XGE", "AI"]])
     print("Loaded", len(spells), "spells")
 
     spellbooks = dict()
@@ -894,9 +911,11 @@ def runServer():
     print("Loaded", len(spellbooks.keys()), "spellbooks")
 
     itemsjson = None
-    with open("items.json") as f:
-        itemsjson = json.load(open("items.json"))
-    items = [Item(item) for item in itemsjson["item"]]
+    items = []
+    for source in itemsources:
+        with open(source) as f:
+            itemsjson = json.load(f)
+        items.append([Item(item) for item in itemsjson["item"]])
     print("Loaded", len(items), "items")
 
     backpacks = dict()
@@ -951,7 +970,7 @@ def runServer():
             toSend = "There are some who call me... ***Tim***"
 
         elif message.content.lower().replace(" ", "") == "gotosleeptim":
-            if "admin" in [name for name in map(str, message.author.roles)]:
+            if "admin" in [name.lower() for name in map(str, message.author.roles)]:
                 await message.channel.send("Ok, Good Night")
                 for spellbook in spellbooks.keys():
                     pickle.dump(spellbooks[spellbook], open("spellbooks/" + spellbook + '.pickle', 'wb'))
