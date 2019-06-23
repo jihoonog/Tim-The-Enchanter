@@ -604,18 +604,45 @@ def parseDice(rolls, multiplier):
                 if roll[0] == "-":
                     roll = roll[1:]
                     sign = -1
-                count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), int(roll[(roll.index("d")+1):])
-                if count != 1 or die != 20:
+                count, die = int(roll[:roll.index("d")] if roll.index("d") > 0 else 1), roll[(roll.index("d")+1):]
+
+                dropHigh = "0"
+                dropLow = "0"
+                if "d" in die:
+                    die, dropLow = die[:die.index("d")], die[(die.index("d")+1):]
+                if "D" in die:
+                    die, dropHigh = die[:die.index("D")], die[(die.index("D")+1):]
+                if "D" in dropLow:
+                    dropLow, dropHigh = dropLow[:dropLow.index("D")], dropLow[(dropLow.index("D")+1):]
+
+                dropHigh = int(dropHigh)
+                dropLow = int(dropLow)
+                die = int(die)
+
+                if ((count-dropHigh)-dropLow) != 1 or die != 20:
                     simpleroll = False
                 subresults = list()
                 for i in range((multiplier if sign == 1 else 1) * count):
                     num = random.randrange(die) + 1
                     subresults.append(num)
                     sum += sign * num
-                    if num == 20:
-                        extras = random.choice(criticaltexts)
-                    if num == 1:
-                        extras = random.choice(failtexts)
+
+                subresults.sort(reverse=True)
+
+                for index in range(len(subresults)):
+                    if index < dropHigh:
+                        sum -= sign*subresults[index]
+                        subresults[index] = str(subresults[index])
+                    elif index >= len(subresults) - dropLow:
+                        sum -= sign*subresults[index]
+                        subresults[index] = str(subresults[index])
+                    else:
+                        if simpleroll:
+                            if subresults[index] == 20:
+                                extras = random.choice(criticaltexts)
+                            if subresults[index] == 1:
+                                extras = random.choice(failtexts)
+                        subresults[index] = "**" + str(subresults[index]) + "**"
                 results.append(subresults)
             elif roll == "":
                 pass
@@ -624,7 +651,7 @@ def parseDice(rolls, multiplier):
                 results.append(roll)
         finalresults = []
         for index in range(len(results)):
-            finalresults.append(((str(rolls[index]) + ": ") if "d" in rolls[index] else "") + str(results[index]))
+            finalresults.append(((str(rolls[index]) + ": ") if "d" in rolls[index] else "") + ", ".join(results[index]))
         if simpleroll and extras != "":
             finalresults.append(extras)
         return ("**Crit** " if multiplier == 2 else "") + "**Result:** " + str(sum) + " (" + str(sum//2) + ")\n" + "\n".join(finalresults)
