@@ -2,7 +2,7 @@ import copy, discord, json, os, pickle, random, re, texttable, time
 
 schools = {"A":"Abjuration", "C":"Conjuration", "D":"Divination", "E":"Enchantment", "V":"Evocation", "I":"Illusion", "N":"Necromancy", "T":"Transmutation"}
 moneyvalue = {"pp":1000, "gp":100, "ep":50, "sp":10, "cp":1}
-spellsources = ["spells.json", "dv.json"]
+spellsources = ["spells.json", "aquisitionsincorporated.json"]
 itemsources = ["items.json"]
 criticaltexts = ["*Tubular!*", "*Nailed it!*", "*We did it lads!*", "*We did it Reddit*", "critxyz", "*UwU*", "*Hell yeah brother*", "*God Bless America*"]
 failtexts = ["*That's a real ouchy bro*", "*That's a real kick in the knackers bro*", "*The Dark Elf laughs at your misfortune*", "*Big oof.*", "*No says the man in red*", "*That was a CRIT (ical fail)*", "You crit shit the bed", "failxyz", "*UwU*", "*Welcome to Trump's America*", "*You hate to see it happen*"]

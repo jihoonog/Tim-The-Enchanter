@@ -1,0 +1,226 @@
+[
+{
+  "name": "Distort Value",
+  "level": 1,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "minute"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "concentration": true,
+      "duration": {
+        "type": "hours",
+        "amount": 8
+      },
+      "type": "timed"
+    }
+  ],
+  "classes": {
+    "fromClassList": [
+      {
+        "name": "Bard",
+        "source": "PHB"
+      },
+      {
+        "name": "Wizard",
+        "source": "PHB"
+      },
+      {
+        "name": "Sorcerer",
+        "source": "PHB"
+      },
+      {
+        "name": "Warlock",
+        "source": "PHB"
+      }
+    ]
+  },
+  "source": "AI",
+  "entries": [
+    "Do you need to squeeze a few more gold pieces out of a merchant as you try to sell that weird octopus statue you liberated from the chaos temple? Do you need to downplay the worth of some magical assets when the tax collector stops by? *Distort Value* has you covered.",
+    "You cast this spell on an object no more than 1 foot on a side, doubling the objects perceived value by adding illusory flourishes or polish to it, or reducing its perceived value by half with the help of illusory scratches, dents, and other unsightly features. Anyone examining the object can ascertain its true value with a successful Intelligence (Investigation) check against your spell save DC."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "At Higher Levels",
+      "entries": [
+        "When you cast this spell using a spell slot of 2nd level or higher, the maximum size of the object increases by 1 foot for each slot level above 1st."
+      ]
+    }
+  ]
+},
+{
+  "name": "Jim's Magic Missile",
+  "level": 1,
+  "school": "v",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "120 feet"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "r (1 gp)": true
+  },
+  "duration": [
+    {
+      "conencration": false,
+      "duration": {
+        "type": "instant",
+      },
+      "type": "timed"
+    }
+  ],
+  "classes": {
+    "fromClassList": [
+      {
+        "name": "Wizard",
+        "source": "PHB"
+      }
+    ]
+  },
+  "source": "AI",
+  "entries": [
+    "Any apprentice wizard can cast a boring old *magic missile*. Sure, it always strikes its target. Yawn. Do away with the drudgery of your grandfather's magic with this improved version of the spell, as used by Jim Darkmagic!",
+    "You create three twisting, whistling, hypoallergenic, gluten-free darts of magical force. Each dart targets a creature of your choice within range. Make a ranged spell attack for each missile. On a hit, a missile deals 2d4 force damage to its target.",
+    "If the attack roll scores a critical hit, the target of that missile takes 5d4 force damage instead of you rolling damage twice for a critical hit. If the attack roll for any missile is a 1, all missiles miss their targets and blow up in your face, dealing 1 force damage per missile to you."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "At Higher Levels",
+      "entries": [
+        "When you cast this spell using a spell slot of 2nd level or higher, the spell creates one more dart, and the royalty component increases by 1 gp, for each slot level above 1st."
+      ]
+    }
+  ]
+},
+{
+  "name": "Fast Friends",
+  "level": 3,
+  "school": "e",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "30 feet"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "conencration": true,
+      "duration": {
+        "type": "hours",
+        "amount": 1
+      },
+      "type": "timed"
+    }
+  ],
+  "classes": {
+    "fromClassList": [
+      {
+        "name": "Bard",
+        "source": "PHB"
+      },
+      {
+        "name": "Wizard",
+        "source": "PHB"
+      },
+      {
+        "name": "Cleric",
+        "source": "PHB"
+      }
+    ]
+  },
+  "source": "AI",
+  "entries": [
+    "When you need to make sure something gets done, you can't rely on some vague promises, sworn oaths, or binding contracts of employment. When you cast this spell, choose one humanoid within range that can see and hear you, and that can understand you. The creature must succeed on a Wisdom saving throw or become charmed by you for the duration. While the creature is charmed in this way, it undertakes to perform any services or activities you ask of it in a friendly manner, to the best of it's ability.",
+    "You can set the creature to new tasks when a previous task is completed, or if you decide to end its current task. If the service or activity might cause harm to the creature, or if it conflicts with the creature's normal activities or desires, the creature can make another Wisdom saving throw to try to end the effect. This save is made with advantage if you or your companions are fighting the creature. If the activity would result in certain death for the creature, the spell ends.",
+    "When the spell ends, the creature knows it was charmed by you."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "At Higher Levels",
+      "entries": [
+        "When you cast this spell using a spell slot of 4th level or higher, you can target one additional creature for each slot level above 3rd."
+      ]
+    }
+  ]
+},
+{
+  "name": "Gift of Gab",
+  "level": 2,
+  "school": "e",
+  "time": [
+    {
+      "number": 1,
+      "unit": "reaction"
+    }
+  ],
+  "range": {
+    "type": "self"
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "r (2 gp)": true
+  },
+  "duration": [
+    {
+      "conencration": false,
+      "duration": {
+        "type": "instant",
+      },
+      "type": "timed"
+    }
+  ],
+  "classes": {
+    "fromClassList": [
+      {
+        "name": "Bard",
+        "source": "PHB"
+      },
+      {
+        "name": "Wizard",
+        "source": "PHB"
+      }
+    ]
+  },
+  "source": "AI",
+  "entries": [
+    "Jim Darkmagic is said to have invented this spell, originally calling it *I said what?!* Have you ever been talking to the local monarch and accidentally mentioned how their son looks like your favorite hog from when you were growing up on the family farm? We've all been there! But rather than being beheaded for a simple slip of the tongue, you can pretend it never happened--by ensuring that no one knows it happened.",
+    "When you cast this spell, you skillfully reshape the memories of listeners in immediate area, so that each creature of your choice within 5 feet of you forgets everything you said within the last 6 seconds. Those creatures then remember that you actually said the words you speak as the verbal component of the spell."
+  ]
+}
+]
