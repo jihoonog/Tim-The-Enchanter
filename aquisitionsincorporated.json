@@ -10,13 +10,13 @@
     }
   ],
   "range": {
-    "type": "point",
+    "type": "touch",
     "distance": {
       "type": "touch"
     }
   },
   "components": {
-    "v": true
+    "V": true
   },
   "duration": [
     {
@@ -66,7 +66,7 @@
 {
   "name": "Jim's Magic Missile",
   "level": 1,
-  "school": "v",
+  "school": "V",
   "time": [
     {
       "number": 1,
@@ -76,21 +76,22 @@
   "range": {
     "type": "point",
     "distance": {
-      "type": "120 feet"
+      "amount": "120",
+      "type": "feet"
     }
   },
   "components": {
     "v": true,
     "s": true,
-    "r (1 gp)": true
+    "r": "1 gp"
   },
   "duration": [
     {
       "conencration": false,
       "duration": {
-        "type": "instant",
+        "type": "instant"
       },
-      "type": "timed"
+      "type": "instant"
     }
   ],
   "classes": {
@@ -120,7 +121,7 @@
 {
   "name": "Fast Friends",
   "level": 3,
-  "school": "e",
+  "school": "E",
   "time": [
     {
       "number": 1,
@@ -130,7 +131,8 @@
   "range": {
     "type": "point",
     "distance": {
-      "type": "30 feet"
+      "amount": "30",
+      "type": "feet"
     }
   },
   "components": {
@@ -181,7 +183,7 @@
 {
   "name": "Gift of Gab",
   "level": 2,
-  "school": "e",
+  "school": "E",
   "time": [
     {
       "number": 1,
@@ -189,20 +191,23 @@
     }
   ],
   "range": {
-    "type": "self"
+    "type": "self",
+    "distance": {
+	"type": "self"
+    }
   },
   "components": {
     "v": true,
     "s": true,
-    "r (2 gp)": true
+    "r": "2 gp"
   },
   "duration": [
     {
       "conencration": false,
       "duration": {
-        "type": "instant",
+        "type": "instant"
       },
-      "type": "timed"
+      "type": "instant"
     }
   ],
   "classes": {
