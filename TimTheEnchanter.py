@@ -953,13 +953,14 @@ def spellSearch(spells, filterList):
         print(e)
         return ["Filter command exception"]
 
-def evaluateStats(diceStats):
+def evaluateStats(diceStats, server):
     table = texttable.Texttable()
     table.add_row(["Person", "Average", "20s", "1s", "Total", "Rolls"])
     for user in diceStats.keys():
-        row = [user[1]]
-        row.extend(diceStats[user])
-        table.add_row(row)
+        if user[0] == server:
+            row = [user[1]]
+            row.extend(diceStats[user])
+            table.add_row(row)
     return "`" + table.draw() + "`"
 
 def runServer():
@@ -1059,10 +1060,10 @@ def runServer():
             toSend = backpackParser(items, backpacks, message.content[2:].split())
 
         elif message.content[:5].lower() == "stats":
-            toSend = evaluateStats(diceStats)
+            toSend = evaluateStats(diceStats, str(message.guild))
 
         elif message.content[:5].lower() == "daily":
-            toSend = evaluateStats(diceStatsDaily)
+            toSend = evaluateStats(diceStatsDaily, str(message.guild))
 
         elif message.content.lower().replace(" ", "") == "whoareyou?":
             toSend = "There are some who call me... ***Tim***"
