@@ -957,7 +957,7 @@ def evaluateStats(diceStats):
     table = texttable.Texttable()
     table.add_row(["Person", "Average", "20s", "1s", "Total", "Rolls"])
     for user in diceStats.keys():
-        row = [user]
+        row = [user[1]]
         row.extend(diceStats[user])
         table.add_row(row)
     return "`" + table.draw() + "`"
@@ -1037,16 +1037,16 @@ def runServer():
         toSend = ""
 
         if message.content[:4].lower() == "roll":
-            toSend = parseDice(message.content[4:], 1, str(message.author.nick), diceStats, diceStatsDaily)
+            toSend = parseDice(message.content[4:], 1, (str(message.guild), str(message.author.nick)), diceStats, diceStatsDaily)
 
         elif message.content[:2].lower() == "r ":
-            toSend = parseDice(message.content[2:], 1, str(message.author.nick), diceStats, diceStatsDaily)
+            toSend = parseDice(message.content[2:], 1, (str(message.guild), str(message.author.nick)), diceStats, diceStatsDaily)
 
         elif message.content[:5].lower() == "croll":
-            toSend = parseDice(message.content[5:], 2, str(message.author.nick), diceStats, diceStatsDaily)
+            toSend = parseDice(message.content[5:], 2, (str(message.guild), str(message.author.nick)), diceStats, diceStatsDaily)
 
         elif message.content[:3].lower() == "cr ":
-            toSend = parseDice(message.content[2:], 2, str(message.author.nick), diceStats, diceStatsDaily)
+            toSend = parseDice(message.content[2:], 2, (str(message.guild), str(message.author.nick)), diceStats, diceStatsDaily)
 
         elif message.content[:6].lower() == "random":
             for x in range(int(message.content[6:]) if message.content[6:] else 1):
