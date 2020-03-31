@@ -1,25 +1,5 @@
 import copy, pickle, os
-
-def itemFinder(items, itemName):
-    savedItem = None
-    text = []
-    for item in items:
-        if item.id == itemName.lower().replace("'", "").replace(" ", ""):
-            return True, item
-        elif itemName.lower().replace("'", "").replace(" ", "") in item.id:
-            if "hidden" in item.attrlist and item.hidden == "True":
-                continue
-            if not savedItem:
-                savedItem = item
-            else:
-                text.append(item.name)
-    if not savedItem:
-        return False, "Item not found"
-    elif text == []:
-        return True, savedItem
-    else:
-        text.append(savedItem.name)
-        return False, "? ".join(sorted(text)) + "?"
+from item import *
 
 
 class Backpack:

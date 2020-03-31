@@ -14,7 +14,7 @@ from spellbook import *
 
 spellsources = ["spells-ai.json", "spells-egw.json", "spells-ggr.json",
                 "spells-phb.json", "spells-scag.json", "spells-xge.json"]
-itemsources = ["items.json"]
+itemsources = ["items.json","roll20-items.json","fluff-items.json","items-base.json"]
 criticaltexts = ["*Tubular!*", "*Nailed it!*", "*We did it lads!*",
                  "*We did it Reddit*", "critxyz", "*UwU*", "*Hell yeah brother*", "*God Bless America*"]
 failtexts = ["*That's a real ouchy bro*", "*That's a real kick in the knackers bro*", "*The Dark Elf laughs at your misfortune*", "*Big oof.*",
@@ -171,7 +171,7 @@ def runServer():
     itemsjson = None
     items = []
     for source in itemsources:
-        with open(source) as f:
+        with open("item_data/{}".format(source)) as f:
             itemsjson = json.load(f)
         items.extend([Item(item) for item in itemsjson["item"]])
     print("Loaded", len(items), "items")
