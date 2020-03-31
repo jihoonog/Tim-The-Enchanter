@@ -11,6 +11,7 @@ from backpack import *
 from spell import *
 from item import *
 from spellbook import *
+from action import *
 
 spellsources = ["spells-ai.json", "spells-egw.json", "spells-ggr.json",
                 "spells-phb.json", "spells-scag.json", "spells-xge.json"]
@@ -151,7 +152,7 @@ def evaluateStats(diceStats, server):
 def runServer():
     spells = []
     for source in spellsources:
-        with open("spell_data/{}".format(source)) as f:
+        with open("data/spell_data/{}".format(source)) as f:
             spells.extend([Spell(spell) for spell in json.load(f)])
     print("Loaded", len(spells), "spells")
 
@@ -171,10 +172,17 @@ def runServer():
     itemsjson = None
     items = []
     for source in itemsources:
-        with open("item_data/{}".format(source)) as f:
+        with open("data/item_data/{}".format(source)) as f:
             itemsjson = json.load(f)
         items.extend([Item(item) for item in itemsjson["item"]])
     print("Loaded", len(items), "items")
+
+    actions = []
+    with open("data/actions.json") as f:
+        actions.extend([Action(action) for action in json.load(f)])
+
+    print("Loaded", len(actions), "actions")
+
 
     backpacks = dict()
     for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
@@ -226,7 +234,10 @@ def runServer():
 
         if message.content[:7].lower() == "manpage":
             toSend = manpage()
-
+            
+        elif message.content[:7].lower() == "action ":
+            toSend = actionParser(actions, message.content[7:])
+            
         elif message.content[:4].lower() == "roll":
             toSend = parseDice(message.content[4:], 1, (str(message.guild), str(
                 message.author.nick)), diceStats, diceStatsDaily)
