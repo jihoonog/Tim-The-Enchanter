@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import copy
 import discord
 import json
@@ -30,8 +32,9 @@ Commands:
 **Spellbook**: sp []
 **Backpack**: bp []
 **Querying Spells**: search [help|random]
-**Items**: item[random|new|delete|save|reload]
-**Spells**: <Spell's name>  
+**Items**: item[random|new|delete|save|reload|<Item's name>]
+**Spells**: spell <Spell's name>  
+**Actions**: action list|<Action's name>
 """
 
 
@@ -375,7 +378,6 @@ def runServer():
 
         print("Responding With:", toSend)
         if toSend == "":
-            await message.channel.send("Can't find spell, spellbook or command")
             return
         elif len(toSend) < 2000:
             if toSend[-7:] == "failxyz":
