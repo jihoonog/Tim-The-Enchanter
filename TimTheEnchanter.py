@@ -14,10 +14,14 @@ from spell import *
 from item import *
 from spellbook import *
 from action import *
+from feat import *
 
 spellsources = ["spells-ai.json", "spells-egw.json", "spells-ggr.json",
                 "spells-phb.json", "spells-scag.json", "spells-xge.json"]
-itemsources = ["items.json","roll20-items.json","fluff-items.json","items-base.json"]
+itemsources = ["items.json", "roll20-items.json",
+               "fluff-items.json", "items-base.json"]
+featsources = ["feats.json"]
+
 criticaltexts = ["*Tubular!*", "*Nailed it!*", "*We did it lads!*",
                  "*We did it Reddit*", "critxyz", "*UwU*", "*Hell yeah brother*", "*God Bless America*"]
 failtexts = ["*That's a real ouchy bro*", "*That's a real kick in the knackers bro*", "*The Dark Elf laughs at your misfortune*", "*Big oof.*",
@@ -35,6 +39,7 @@ Commands:
 **Items**: item[random|new|delete|save|reload|<Item's name>]
 **Spells**: spell <Spell's name>  
 **Actions**: action list|<Action's name>
+**Feats**: feat <Feat's name>
 """
 
 
@@ -183,9 +188,12 @@ def runServer():
     actions = []
     with open("data/actions.json") as f:
         actions.extend([Action(action) for action in json.load(f)])
-
     print("Loaded", len(actions), "actions")
 
+    feats = []
+    with open("data/feats.json") as f:
+        feats.extend([Feat(feat) for feat in json.load(f)])
+    print("Loaded", len(feats), "feats")
 
     backpacks = dict()
     for file in [file for file in os.listdir("backpacks/") if os.path.isfile("backpacks/" + file) and file[-7:] == ".pickle"]:
@@ -220,9 +228,6 @@ def runServer():
             client.close()
             quit()
 
-        elif message.content.startswith('#'):
-            return
-
         elif len(message.embeds) > 0:
             return
 
@@ -237,10 +242,17 @@ def runServer():
 
         if message.content[:7].lower() == "manpage":
             toSend = manpage()
-            
+
         elif message.content[:7].lower() == "action ":
             toSend = actionParser(actions, message.content[7:])
-            
+
+        elif message.content[:5].lower() == "feat ":
+            found, result = featFinder(feats, message.content[5:])
+            if found:
+                toSend = result.fullText()
+            else:
+                toSend = result
+
         elif message.content[:4].lower() == "roll":
             toSend = parseDice(message.content[4:], 1, (str(message.guild), str(
                 message.author.nick)), diceStats, diceStatsDaily)
@@ -379,6 +391,7 @@ def runServer():
         print("Responding With:", toSend)
         if toSend == "":
             return
+
         elif len(toSend) < 2000:
             if toSend[-7:] == "failxyz":
                 await message.channel.send(toSend[:-7])

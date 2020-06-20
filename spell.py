@@ -12,7 +12,6 @@ class Spell:
         self.school = spell["school"]
         self.time = str(spell["time"][0]["number"]) + " " + spell["time"][0]["unit"]
         self.range = spell["range"]["type"]
-        print(spell["name"])
         self.rangetype = spell["range"]["distance"]["type"]
         self.rangecount = "" if self.rangetype in ["touch", "self", "special", "sight", "unlimited"] else str(spell["range"]["distance"]["amount"])
         self.v = "V " if "v" in spell["components"].keys() else ""
