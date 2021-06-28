@@ -145,6 +145,103 @@ def parseDice(rolls, multiplier, user, diceStats, diceStatsDaily):
         print(e)
         return "Dice roll command exception"
 
+"""
+This will generate the int value of the roll 
+"""
+def parseDiceInt(rolls, multiplier):
+    try:
+        simpleroll = True
+        extras = ""
+        sum = 0
+        results = []
+        rolls = rolls.replace(" ", "").replace("-", "+-").split("+")
+        for roll in rolls:
+            if "d" in roll:
+                sign = 1
+                if roll[0] == "-":
+                    roll = roll[1:]
+                    sign = -1
+                count, die = int(roll[:roll.index("d")] if roll.index(
+                    "d") > 0 else 1), roll[(roll.index("d")+1):]
+
+                dropHigh = "0"
+                dropLow = "0"
+                if "d" in die:
+                    die, dropLow = die[:die.index(
+                        "d")], die[(die.index("d")+1):]
+                if "D" in die:
+                    die, dropHigh = die[:die.index(
+                        "D")], die[(die.index("D")+1):]
+                if "D" in dropLow:
+                    dropLow, dropHigh = dropLow[:dropLow.index(
+                        "D")], dropLow[(dropLow.index("D")+1):]
+
+                dropHigh = int(dropHigh)
+                dropLow = int(dropLow)
+                die = int(die)
+
+                if ((count-dropHigh)-dropLow) != 1 or die != 20:
+                    simpleroll = False
+                subresults = list()
+                for i in range((multiplier if sign == 1 else 1) * count):
+                    num = random.randrange(die) + 1
+
+                    subresults.append(num)
+                    sum += sign * num
+
+                subresults.sort(reverse=True)
+
+                subtotal = 0
+
+                for index in range(len(subresults)):
+                    if index < dropHigh:
+                        sum -= sign*subresults[index]
+                        subresults[index] = str(subresults[index])
+                    elif index >= len(subresults) - dropLow:
+                        sum -= sign*subresults[index]
+                        subresults[index] = str(subresults[index])
+                    else:
+                        if simpleroll:
+                            if subresults[index] == 20:
+                                extras = random.choice(criticaltexts)
+                            if subresults[index] == 1:
+                                extras = random.choice(failtexts)
+                        subtotal += subresults[index]
+                        subresults[index] = "**" + \
+                            str(subresults[index]) + "**"
+                subresults.append("(" + str(subtotal) + ")")
+                results.append(subresults)
+            elif roll == "":
+                pass
+            else:
+                sum += int(roll)
+                results.append(roll)
+        finalresults = []
+        for index in range(len(results)):
+            finalresults.append(
+                ((str(rolls[index]) + ": ") if "d" in rolls[index] else "") + ", ".join(results[index]))
+        if simpleroll and extras != "":
+            finalresults.append(extras)
+        return (sum, sum//2)
+    except Exception as e:
+        print(e)
+        return None
+
+def simulateDiceRoll(rolls, multiplier, target, num_simulations = 10000):
+    on_target = 0
+    above = 0
+    below = 0
+    for i in range(num_simulations):
+        score, _ = parseDiceInt(rolls, multiplier)
+
+        if score == target:
+            on_target += 1
+        if score > target:
+            above += 1
+        if score < target:
+            below += 1
+    return above / num_simulations, on_target / num_simulations, below / num_simulations
+
 
 def evaluateStats(diceStats, server):
     table = texttable.Texttable()
@@ -252,7 +349,13 @@ def runServer():
                 toSend = result.fullText()
             else:
                 toSend = result
+        elif message.content[:5].lower() == "prob ":
+            msg = message.content[5:].strip()
 
+            split_idx = msg.index(" ")
+            target = int(msg[0:split_idx])
+            results = simulateDiceRoll(msg[split_idx:], 1, target)
+            toSend = "% > {:.3f}\n% = {:.3f}\n% < {:.3f}".format(results[0]*100, results[1]*100, results[2]*100)
         elif message.content[:4].lower() == "roll":
             toSend = parseDice(message.content[4:], 1, (str(message.guild), str(
                 message.author.nick)), diceStats, diceStatsDaily)
